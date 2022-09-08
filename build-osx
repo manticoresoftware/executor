@@ -5,7 +5,12 @@ LZ4_REV="8ce521e086fcc4d81c57a60915676673e341ab05"
 
 # sudo xcode-select --install
 brew upgrade
-brew install gcc@11 curl autoconf automake bison re2c xxhash
+brew install gcc@11 curl autoconf automake bison re2c xxhash lz4
+
+# Remove dynamic libraries to use static for lz4
+for file in /usr/local/lib/liblz4*.dylib; do
+  rm -f "$file"
+done
 
 curl -sSL "https://github.com/php/php-src/archive/refs/tags/php-$PHP_VERSION.tar.gz" | tar -xzf -
 cd "php-src-php-$PHP_VERSION"
