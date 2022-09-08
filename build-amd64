@@ -3,8 +3,8 @@ set -e
 PHP_VERSION="$1"
 LZ4_REV="8ce521e086fcc4d81c57a60915676673e341ab05"
 
-apt update -y
-apt install -y curl build-essential autoconf automake bison re2c
+apt-get update -y
+apt-get install -y curl build-essential autoconf automake bison re2c
 
 curl -sSL "https://github.com/php/php-src/archive/refs/tags/php-$PHP_VERSION.tar.gz" | tar -xzf -
 cd "php-src-php-$PHP_VERSION"
