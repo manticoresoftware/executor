@@ -19,14 +19,14 @@ jobs:
       matrix:
         os:
           - ubuntu-22.04
-          - windows-latest
-          - macOS-latest
+          - windows-2022
+          - macos-12
     steps:
       - uses: actions/checkout@v3
         with:
           app-version: ${{ env.APP_VERSION }}
       - name: Build binary
-        run: ./build-amd64 ${{ env.PHP_VERSION }}
+        run: ./build ${{ env.PHP_VERSION }}
       - name: Create artifact
         run: |
           os="${{ runner.os }}"
@@ -59,7 +59,7 @@ jobs:
         with:
           app-version: ${{ env.APP_VERSION }}
       - name: Build binary
-        run: ./build-amd64 ${{ env.PHP_VERSION }}
+        run: ./build ${{ env.PHP_VERSION }}
       - name: create sample script
         run: |
           mkdir -p .debpkg/usr/bin
@@ -143,10 +143,10 @@ jobs:
           - os: ubuntu-22.04
             asset_name_suffix: linux.tar.gz
             asset_content_type: application/gzip
-          - os: windows-latest
+          - os: windows-2022
             asset_name_suffix: windows.zip
             asset_content_type: application/zip
-          - os: macOS-latest
+          - os: macos-12
             asset_name_suffix: macos.tar.gz
             asset_content_type: application/gzip
     steps:
