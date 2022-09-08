@@ -25,8 +25,8 @@ mkdir dist
 prefix="$(pwd)/dist"
 lz_lib="$(pwd)/ext/lz4/lz4/lib"
 ./buildconf --force
-./configure YACC=/usr/local/Cellar/bison/3.8.2/bin/bison \
-  LDFLAGS=-static CFLAGS="-O3" --prefix="$prefix" --disable-all \
+./configure LDFLAGS="-L/usr/local/opt/bison/lib" CFLAGS="-O3" \
+  --prefix="$prefix" --disable-all \
   --enable-shared=no --enable-static=yes --with-layout=GNU \
   --with-pear=no --disable-cgi --disable-phpdbg \
   --with-pcre-jit --enable-lz4 \
