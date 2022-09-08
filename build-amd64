@@ -4,7 +4,7 @@ PHP_VERSION="$1"
 LZ4_REV="8ce521e086fcc4d81c57a60915676673e341ab05"
 
 sudo apt-get update -y
-sudo apt-get install -y curl build-essential autoconf automake bison re2c
+sudo apt-get install -y curl build-essential autoconf automake bison re2c liblz4-dev
 
 curl -sSL "https://github.com/php/php-src/archive/refs/tags/php-$PHP_VERSION.tar.gz" | tar -xzf -
 cd "php-src-php-$PHP_VERSION"
