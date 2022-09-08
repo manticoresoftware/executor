@@ -4,8 +4,8 @@ PHP_VERSION="$1"
 LZ4_REV="8ce521e086fcc4d81c57a60915676673e341ab05"
 
 # sudo xcode-select --install
-sudo brew upgrade
-sudo brew install gcc@11 curl autoconf automake bison re2c xxhash
+brew upgrade
+brew install gcc@11 curl autoconf automake bison re2c xxhash
 
 curl -sSL "https://github.com/php/php-src/archive/refs/tags/php-$PHP_VERSION.tar.gz" | tar -xzf -
 cd "php-src-php-$PHP_VERSION"
