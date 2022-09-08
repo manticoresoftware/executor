@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -e
+PHP_VERSION="$1"
+
+xcode-install --install
+brew upgrade
+brew install curl autoconf automake bison re2c
+
+# TODO
+# Apple does not support static linking

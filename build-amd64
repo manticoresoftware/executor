@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -e
+PHP_VERSION="$1"
+LZ4_REV="8ce521e086fcc4d81c57a60915676673e341ab05"
+
+apt update -y
+apt install -y curl build-essential autoconf automake bison re2c
+
+curl -sSL "https://github.com/php/php-src/archive/refs/tags/php-$PHP_VERSION.tar.gz" | tar -xzf -
+cd "php-src-php-$PHP_VERSION"
+
+# Build extra extensions
+cd ext
+
+#  lz4
+git clone --recursive --depth=1 https://github.com/kjdev/php-ext-lz4.git
+mv php-ext-lz4 lz4
+cd lz4 && git checkout "$LZ4_REV" && cd ..
+cd ..
+
+# Build main php
+mkdir dist
+prefix="$(pwd)/dist"
+./buildconf --force
+./configure LDFLAGS=-static CFLAGS="-O3 -march=native" --prefix="$prefix" --disable-all \
+  --enable-shared=no --enable-static=yes --with-layout=GNU \
+  --with-pear=no --disable-cgi --disable-phpdbg \
+  --with-pcre-jit --with-lz4 \
+  --enable-pcntl --enable-posix
+
+sed -ie 's/-export-dynamic//g' Makefile
+sed -ie 's/-o $(SAPI_CLI_PATH)/-all-static -o $(SAPI_CLI_PATH)/g' Makefile
+make LDFLAGS=-ldl -j8
+make install-cli
+strip --strip-all dist/bin/php
+

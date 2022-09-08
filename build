@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -e
+os=$(uname)
+
+case "$os" in
+  Linux)
+    ./build-amd64 "$@"
+    ;;
+  Darwin)
+    ./build-osx "$@"
+    ;;
+  Windows*)
+    ./build-win "$@"
+    ;;
+  *)
+    >&2 echo "Unsupported OS: $os"
+    exit 1
+    ;;
+esac
