@@ -108,12 +108,11 @@ jobs:
           fetch-depth: 0
       - name: Generate changelog
         run: |
-          curl -sSL https://github.com/git-chglog/git-chglog/releases/download/0.15.1/git-chglog_linux_amd64 > git-chglog_linux_amd64
-          chmod +x git-chglog_linux_amd64
-          mv git-chglog_linux_amd64 git-chglog
+          curl -sSL https://github.com/git-chglog/git-chglog/releases/download/v0.15.1/git-chglog_0.15.1_linux_amd64.tar.gz | tar -xzf -
+          chmod +x git-chglog
           ./git-chglog --next-tag 'Unreleased' --output ./CHANGELOG.md
           # Next line to uncomment when we will use tags for releases
-          # ./git-chglog --next-tag 'Unreleased' --output ./CHANGELOG.md $(git describe --tags $(git rev-list --tags --max-count=1))
+          # ./git-chglog --output ./CHANGELOG.md $(git describe --tags $(git rev-list --tags --max-count=1))
 
       - name: Create Release
         id: create-release
