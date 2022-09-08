@@ -16,6 +16,7 @@ cd ext
 git clone --recursive --depth=1 https://github.com/kjdev/php-ext-lz4.git
 mv php-ext-lz4 lz4
 cd lz4 && git checkout "$LZ4_REV" && cd ..
+
 cd ..
 
 # Build main php
@@ -25,7 +26,7 @@ prefix="$(pwd)/dist"
 ./configure LDFLAGS=-static CFLAGS="-O3 -march=native" --prefix="$prefix" --disable-all \
   --enable-shared=no --enable-static=yes --with-layout=GNU \
   --with-pear=no --disable-cgi --disable-phpdbg \
-  --with-pcre-jit --with-lz4 \
+  --with-pcre-jit --enable-lz4 \
   --enable-pcntl --enable-posix
 
 sed -ie 's/-export-dynamic//g' Makefile
