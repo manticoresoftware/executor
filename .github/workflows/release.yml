@@ -1,9 +1,9 @@
 name: release
 
-"on":
+on:
   push:
-    tags:
-      - 'v*.*.*'
+    branches:
+      - dev
 
 env:
   APP_NAME: 'manticore-executor'
