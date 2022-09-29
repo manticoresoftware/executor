@@ -8,7 +8,7 @@ Manticore Executor is a custom built PHP binary which:
 
 ## Supported OS
 
-| OS | Architecture | availability |
+| OS | Architecture | Availability |
 |-|-|-|
 | Centos 7 | arm64, x86_64 | ✅ repo.manticoresearch.com |
 | Centos 8 | arm64, x86_64 | ✅ repo.manticoresearch.com|
