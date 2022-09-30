@@ -34,8 +34,8 @@ lz4_lib="$(pwd)/ext/lz4/lz4"
   --with-pear=no --disable-cgi --disable-phpdbg \
   --with-pcre-jit --enable-lz4 \
   --with-lz4-includedir="$lz4_lib" \
-  --enable-pcntl --enable-posix
-
+  --enable-pcntl --enable-posix \
+  --enable-socket
 sed -ie 's/-export-dynamic//g' Makefile
 sed -ie 's/-o $(SAPI_CLI_PATH)/-all-static -o $(SAPI_CLI_PATH)/g' Makefile
 make LDFLAGS=-ldl -j8

@@ -38,7 +38,8 @@ lz4_lib="$(pwd)/ext/lz4/lz4"
   --with-pear=no --disable-cgi --disable-phpdbg \
   --with-pcre-jit --enable-lz4 \
   --with-lz4-includedir="$lz4_lib" \
-  --enable-pcntl --enable-posix
+  --enable-pcntl --enable-posix \
+  --enable-socket
 make LDFLAGS=-ldl -j8
 make install-cli
 strip dist/bin/php
