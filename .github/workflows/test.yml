@@ -1,0 +1,62 @@
+name: test
+
+on:
+  pull_request:
+    branches:
+      - main
+
+env:
+  APP_NAME: 'manticore-executor'
+  PHP_VERSION: '8.1.11'
+  MAINTAINER: 'Manticore'
+  DESC: 'Custom built PHP executor for Manticore.'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-22.04
+          - macos-12
+        include:
+          - os: ubuntu-22.04
+            script_name: ./build-linux
+          - os: macos-12
+            script_name: ./build-osx
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ilammy/msvc-dev-cmd@v1.11.0
+        with:
+          uwp: true
+      - name: Build binary
+        run: ${{ matrix.script_name }} ${{ env.PHP_VERSION }}
+      - name: Create artifact
+        run: |
+          os="${{ runner.os }}"
+          assets="${{ env.APP_NAME }}_$(echo "${{ runner.os }}" | tr '[:upper:]' '[:lower:]')_amd64"
+          echo "$assets"
+          mkdir -p "dist/$assets"
+          if [[ "${{ runner.os }}" == Windows ]]; then
+            mv php-src-php-${{ env.PHP_VERSION }}/dist/php.exe php-src-php-${{ env.PHP_VERSION }}/dist/${{ env.APP_NAME }}.exe
+            cp php-src-php-${{ env.PHP_VERSION }}/dist/* "dist/$assets/"
+          else
+            cp php-src-php-${{ env.PHP_VERSION }}/dist/bin/php "dist/$assets/${{ env.APP_NAME }}"
+          fi
+          cp README.* "dist/$assets/"
+          (
+            cd dist
+            if [[ "${{ runner.os }}" == Windows ]]; then
+              7z a "$assets.zip" "$assets"
+            else
+              tar czf "$assets.tar.gz" "$assets"
+            fi
+            ls -lah *.*
+          )
+        shell: bash
+      - uses: actions/upload-artifact@v3
+        with:
+          name: artifact-${{ matrix.os }}-amd64
+          path: |
+            dist/*.tar.gz
+            dist/*.zip

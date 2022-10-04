@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 PHP_VERSION="$1"
-LZ4_REV="8ce521e086fcc4d81c57a60915676673e341ab05"
+ZSTD_REV="4504e4186e79b197cfcb75d4d09aa47ef7d92fe9"
 SKIP_SYSTEM_DEPS="$2"
 
 # sudo xcode-select --install
@@ -9,7 +9,15 @@ SKIP_SYSTEM_DEPS="$2"
 # and build it for homebrew with same script
 if [[ -z "$SKIP_SYSTEM_DEPS" ]]; then
   brew upgrade
-  brew install curl autoconf automake bison re2c
+  brew install curl autoconf automake bison re2c zstd
+fi
+
+# Leave only static libs on
+ZSTD_PATH=$(brew --prefix zstd)
+if test -f "$ZSTD_PATH"/lib/*.dylib; then
+  for f in "$ZSTD_PATH"/lib/*.dylib; do
+    mv "$f" "$f.bak"
+  done
 fi
 
 curl -sSL "https://github.com/php/php-src/archive/refs/tags/php-$PHP_VERSION.tar.gz" | tar -xzf -
@@ -18,11 +26,11 @@ cd "php-src-php-$PHP_VERSION"
 # Build extra extensions
 cd ext
 
-#  lz4
-git clone --recursive --depth=1 https://github.com/kjdev/php-ext-lz4.git
-mv php-ext-lz4 lz4
-cd lz4 && git checkout "$LZ4_REV"
-cd lz4 && make liblz4.a && mkdir include && cp lib/*.h include/ && cd ..
+#  zstd
+git clone --recursive --depth=1 https://github.com/kjdev/php-ext-zstd.git
+mv php-ext-zstd zstd
+cd zstd && git checkout "$ZSTD_REV"
+# cd zstd && make && cd ..
 cd ..
 
 cd ..
@@ -30,15 +38,21 @@ cd ..
 # Build main php
 mkdir dist
 prefix="$(pwd)/dist"
-lz4_lib="$(pwd)/ext/lz4/lz4"
 ./buildconf --force
 ./configure YACC=/usr/local/Cellar/bison/3.8.2/bin/bison \
   CFLAGS="-O3" --prefix="$prefix" --disable-all \
   --enable-shared=no --enable-static=yes --with-layout=GNU \
   --with-pear=no --disable-cgi --disable-phpdbg \
-  --with-pcre-jit --enable-lz4 \
-  --with-lz4-includedir="$lz4_lib" \
-  --enable-pcntl --enable-posix
+  --with-pcre-jit --enable-zstd --with-libzstd  \
+  --enable-pcntl --enable-posix \
+  --enable-socket
 make LDFLAGS=-ldl -j8
 make install-cli
 strip dist/bin/php
+
+# Return skipped dynamic libs
+if test -f "$ZSTD_PATH"/lib/*.dylib.bak; then
+  for f in "$ZSTD_PATH"/lib/*.dylib.bak; do
+    mv "$f" "${f%*.bak}"
+  done
+fi
