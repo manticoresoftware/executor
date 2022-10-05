@@ -3,6 +3,7 @@
 ## What is it?
 
 Manticore Executor is a custom built PHP binary which:
+
 * includes everything needed for Manticore supplementary tools (e.g. [backup](https://github.com/manticoresoftware/manticoresearch-backup)) to run successfully
 * doesn't include anything else which makes it very light and fast to install
 
@@ -29,10 +30,10 @@ By default, we disable all extensions and enable only those required to run our 
 
 We build executor from `PHP 8.1.10` with the following extensions enabled and compiled into the executable statically:
 
-- pcntl
-- posix
-- pcre (JIT)
-- lz4
+* pcntl
+* posix
+* pcre (JIT)
+* lz4
 
 ## Build from source
 
@@ -57,3 +58,35 @@ xattr -dr com.apple.quarantine manticore-executor
 ### Windows support
 
 We do not support Windows for now but this work is in progress. For now you can just install PHP 8.1.10+ and enable the requested extensions (see above).
+
+## Deployment
+
+1. [The GitHub actions workflow](.github/workflows/release.yml) prepares packages/binaries for
+
+   * Centos 7/8 x86_64 and arm64
+   * Ubuntu Xenial/Bionic/Focal/Jammy x86_64 and arm64
+   * Debian Stretch/Buster/Bullseye x86_64 and arm64
+   * MacOS x86_64
+
+2. The same workflow deploys the packages to [repositories](https://repo.manticoresearch.com)
+
+3. What's to be done manually after the above is:
+
+   * build binaries for MacOS arm64 following [this instruction](#how-to-build-manually)
+   * update `root_url` in the [Homebrew formula](https://github.com/manticoresoftware/homebrew-manticore/blob/main/Formula/manticore-executor.rb) file with the latest release version
+   * update `DEB_PKG` variables in the [Dockerfile](https://github.com/manticoresoftware/manticoresearch-backup/blob/main/Dockerfile) of [manticoresearch-backup](https://github.com/manticoresoftware/manticoresearch-backup) repository
+
+## How to build manually
+
+Several scripts used to build the final package:
+
+* `build-linux`
+* `build-osx`
+
+The scripts accept a version of PHP as a parameter. The current version is `8.1.11`. To build the binary, you should run the following example:
+
+```bash
+./build-linux "8.1.11"
+```
+
+The command above will build the package on Linux with **PHP** `8.1.11`. Once it's done, you can find your binary in folder `dist/bin`.
