@@ -34,7 +34,7 @@ jobs:
       - name: Create artifact
         run: |
           os="${{ runner.os }}"
-          assets="${{ env.APP_NAME }}_${{ github.ref_name }}_$( date +%y%m%d )-${GITHUB_SHA:0:7}_$(echo "${{ runner.os }}" | tr '[:upper:]' '[:lower:]')_amd64"
+          assets="${{ env.APP_NAME }}_${{ github.ref_name }}-$( date +%y%m%d )-${GITHUB_SHA:0:7}_$(echo "${{ runner.os }}" | tr '[:upper:]' '[:lower:]')_amd64"
           echo "$assets"
           mkdir -p "dist/$assets"
           if [[ "${{ runner.os }}" == Windows ]]; then
@@ -81,7 +81,7 @@ jobs:
       - name: Create artifact
         run: |
           os="${{ runner.os }}"
-          assets="${{ env.APP_NAME }}_${{ github.ref_name }}_$( date +%y%m%d )-${GITHUB_SHA:0:7}_$(echo "${{ runner.os }}" | tr '[:upper:]' '[:lower:]')_arm64"
+          assets="${{ env.APP_NAME }}_${{ github.ref_name }}-$( date +%y%m%d )-${GITHUB_SHA:0:7}_$(echo "${{ runner.os }}" | tr '[:upper:]' '[:lower:]')_arm64"
           echo "$assets"
           mkdir -p "dist/$assets"
           cp php-src-php-${{ env.PHP_VERSION }}/dist/bin/php "dist/$assets/${{ env.APP_NAME }}"
