@@ -464,7 +464,7 @@ jobs:
             ext: rpm
             script: bin/upload_repo_rpm
             distro: 8
-          - artifact: artifact
+          - artifact: artifact-macos-12-amd64
             ext: tar.gz
             script: bin/upload_repo_arc
             distro: ""
