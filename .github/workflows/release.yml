@@ -12,8 +12,8 @@ env:
   DESC: 'Custom built PHP executor for Manticore.'
   EXTRA_NAME: 'manticore-extra'
   EXTRA_DESC: 'Manticore extra package that includes executor and columnar lib'
-  COLUMNAR_NAME: 'manticore-columnar'
-  COLUMNAR_VERSION: '1.15.4'
+  COLUMNAR_NAME: 'manticore-columnar-lib'
+  COLUMNAR_VERSION: '1.16.1'
 
 jobs:
   build-artifact:
