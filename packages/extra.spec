@@ -3,7 +3,7 @@ Name: {{ NAME }}
 Version: {{ VERSION }}
 Release: 1%{?dist}
 Group: Applications
-License: GPLv2
+License: PHP 3.01
 Packager: {{ MAINTAINER }}
 Vendor: {{ MAINTAINER }}
 Requires: {{ EXECUTOR_NAME }} >= {{ EXECUTOR_VERSION }}
