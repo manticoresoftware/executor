@@ -341,15 +341,28 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: artifact-extra-deb-all
+          name: artifact-extra-deb-amd64
           path: |
-            ./*.deb
+            ./*amd64.deb
 
       - uses: actions/upload-artifact@v3
         with:
-          name: artifact-extra-rpm-all
+          name: artifact-extra-deb-arm64
           path: |
-            ./*.rpm
+            ./*arm64.deb
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: artifact-extra-rpm-amd64
+          path: |
+            ./*x86_64.rpm
+            !./*-debuginfo-*.rpm
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: artifact-extra-rpm-arm64
+          path: |
+            ./*aarch64.rpm
             !./*-debuginfo-*.rpm
 
   create-release:
@@ -487,9 +500,10 @@ jobs:
           - pkg: rpm
             asset_content_type: application/x-rpm
     steps:
+      # We download amd64 only but just because of noarch
       - uses: actions/download-artifact@v3
         with:
-          name: artifact-extra-${{ matrix.pkg }}-all
+          name: artifact-extra-${{ matrix.pkg }}-amd64
 
       - uses: actions/download-artifact@v3
         with:
@@ -500,7 +514,9 @@ jobs:
           file=$(ls *.${{ matrix.pkg }} | head -n 1)
           mv "$file" artifact
           rm -f *.${{ matrix.pkg }}
-          mv artifact "${file//(aarch64|amd64|arm64)/all}"
+          file=${file/amd64/all}
+          file=${file/x86_64/noarch}
+          mv artifact "$file"
         shell: bash
       - id: vars
         run: |
@@ -522,10 +538,12 @@ jobs:
     needs:
       - upload-release
       - upload-linux-packages
+      - upload-extra-packages
     runs-on: self-hosted
     strategy:
       matrix:
         include:
+          # manticore-executor first
           - artifact: artifact-deb-amd64
             ext: deb
             script: bin/upload_repo_deb
@@ -602,6 +620,79 @@ jobs:
             ext: tar.gz
             script: bin/upload_repo_arc
             distro: ""
+          # manticore-extra meta package now
+          - artifact: artifact-extra-deb-amd64
+            ext: deb
+            script: bin/upload_repo_deb
+            distro: stretch
+          - artifact: artifact-extra-deb-arm64
+            ext: deb
+            script: bin/upload_repo_deb
+            distro: stretch
+          - artifact: artifact-extra-deb-amd64
+            ext: deb
+            script: bin/upload_repo_deb
+            distro: buster
+          - artifact: artifact-extra-deb-arm64
+            ext: deb
+            script: bin/upload_repo_deb
+            distro: buster
+          - artifact: artifact-extra-deb-amd64
+            ext: deb
+            script: bin/upload_repo_deb
+            distro: xenial
+          - artifact: artifact-extra-deb-arm64
+            ext: deb
+            script: bin/upload_repo_deb
+            distro: xenial
+          - artifact: artifact-extra-deb-amd64
+            ext: deb
+            script: bin/upload_repo_deb
+            distro: bionic
+          - artifact: artifact-extra-deb-arm64
+            ext: deb
+            script: bin/upload_repo_deb
+            distro: bionic
+          - artifact: artifact-extra-deb-amd64
+            ext: deb
+            script: bin/upload_repo_deb
+            distro: focal
+          - artifact: artifact-extra-deb-arm64
+            ext: deb
+            script: bin/upload_repo_deb
+            distro: focal
+          - artifact: artifact-extra-deb-amd64
+            ext: deb
+            script: bin/upload_repo_deb
+            distro: jammy
+          - artifact: artifact-extra-deb-arm64
+            ext: deb
+            script: bin/upload_repo_deb
+            distro: jammy
+          - artifact: artifact-extra-deb-amd64
+            ext: deb
+            script: bin/upload_repo_deb
+            distro: bullseye
+          - artifact: artifact-extra-deb-arm64
+            ext: deb
+            script: bin/upload_repo_deb
+            distro: bullseye
+          - artifact: artifact-extra-rpm-amd64
+            ext: rpm
+            script: bin/upload_repo_rpm
+            distro: 7
+          - artifact: artifact-extra-rpm-arm64
+            ext: rpm
+            script: bin/upload_repo_rpm
+            distro: 7
+          - artifact: artifact-extra-rpm-amd64
+            ext: rpm
+            script: bin/upload_repo_rpm
+            distro: 8
+          - artifact: artifact-extra-rpm-arm64
+            ext: rpm
+            script: bin/upload_repo_rpm
+            distro: 8
     steps:
       - uses: actions/checkout@v3
       - run: mkdir build
