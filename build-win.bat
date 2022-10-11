@@ -1,4 +1,11 @@
 @echo on
+@REM Copyright (c) 2022, Manticore Software LTD (https://manticoresearch.com)
+
+@REM This program is free software; you can redistribute it and/or modify
+@REM it under the terms of the The PHP License, version 3.01. You should have
+@REM received a copy of the license along with this program; if you did not, 
+@REM you can find it at https://www.php.net/license/3_01.txt
+
 @REM https://github.com/actions/runner-images/blob/main/images/win/Windows2022-Readme.md
 set PHP_VERSION=%1
 set LZ4_REV=8ce521e086fcc4d81c57a60915676673e341ab05
