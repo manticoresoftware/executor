@@ -20,11 +20,13 @@ if [[ -z "$SKIP_SYSTEM_DEPS" ]]; then
 fi
 
 # Leave only static libs on
-ZSTD_PATH=$(brew --prefix zstd)
-if test -f "$ZSTD_PATH"/lib/*.dylib; then
-  for f in "$ZSTD_PATH"/lib/*.dylib; do
-    mv "$f" "$f.bak"
-  done
+if which brew; then
+  ZSTD_PATH=$(brew --prefix zstd)
+  if test -f "$ZSTD_PATH"/lib/*.dylib; then
+    for f in "$ZSTD_PATH"/lib/*.dylib; do
+      mv "$f" "$f.bak"
+    done
+  fi
 fi
 
 curl -sSL "https://github.com/php/php-src/archive/refs/tags/php-$PHP_VERSION.tar.gz" | tar -xzf -
