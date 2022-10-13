@@ -90,3 +90,19 @@ The scripts accept a version of PHP as a parameter. The current version is `8.1.
 ```
 
 The command above will build the package on Linux with **PHP** `8.1.11`. Once it's done, you can find your binary in folder `dist/bin`.
+
+
+### Build ARM64 for OSX
+
+While GitHub actions do not have runners that support ARM64 architecture for OSX, we have the manual build of it
+
+Once you updated the manticore-executor formula in [homebrew-manticore](https://github.com/manticoresoftware/homebrew-manticore) repository, you should build it following these instructions on your ARM64 OSX:
+
+```bash
+brew install --build-bottle manticoresoftware/manticore/manticore-executor
+brew bottle manticoresoftware/manticore/manticore-executor
+```
+
+Once it's done just create a new pull request and update `manticore-executor.rb` file with the suggested line of sha256 sum for your bottle.
+
+You should also upload just the newly built bottle to the releases page. Do not forget to rename the file and remove `.1` and change `--` to `-` to follow the same format as all other files that have already been uploaded to the release.
