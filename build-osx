@@ -54,7 +54,7 @@ prefix="$(pwd)/dist"
   --with-pear=no --disable-cgi --disable-phpdbg \
   --with-pcre-jit --enable-zstd --with-libzstd  \
   --enable-pcntl --enable-posix \
-  --enable-socket
+  --enable-sockets
 make LDFLAGS=-ldl -j8
 make install-cli
 strip dist/bin/php

@@ -39,7 +39,8 @@ prefix="$(pwd)/dist"
   --enable-shared=no --enable-static=yes --with-layout=GNU \
   --with-pear=no --disable-cgi --disable-phpdbg \
   --with-pcre-jit --enable-zstd --with-libzstd  \
-  --enable-pcntl --enable-posix
+  --enable-pcntl --enable-posix \
+  --enable-sockets
 
 sed -ie 's/-export-dynamic//g' Makefile
 sed -ie 's/-o $(SAPI_CLI_PATH)/-all-static -o $(SAPI_CLI_PATH)/g' Makefile
