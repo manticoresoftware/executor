@@ -33,7 +33,7 @@ We build executor from `PHP 8.1.10` with the following extensions enabled and co
 * pcntl
 * posix
 * pcre (JIT)
-* lz4
+* zstd
 
 ## Build from source
 
