@@ -22,8 +22,36 @@ fi
 # and build it for homebrew with same script
 if [[ -z "$SKIP_SYSTEM_DEPS" ]]; then
   brew upgrade
-  brew install curl autoconf automake bison re2c zstd git
+  brew install curl autoconf automake bison re2c zstd git openssl zlib
 fi
+
+if which brew; then
+  brew link openssl
+fi
+
+hide_dynamic_libs() {
+  ! which brew && return
+  for lib in "$@"; do
+    LIB_PATH=$(brew --prefix "$lib")
+    if ls "$LIB_PATH"/lib/*.dylib; then
+      for f in "$LIB_PATH"/lib/*.dylib; do
+        mv "$f" "$f.bak"
+      done
+    fi
+  done
+}
+
+restore_dynamic_libs() {
+  ! which brew && return
+  for lib in "$@"; do
+    LIB_PATH=$(brew --prefix "$lib")
+    if ls "$LIB_PATH"/lib/*.dylib.bak; then
+      for f in "$LIB_PATH"/lib/*.dylib.bak; do
+        mv "$f" "${f%*.bak}"
+      done
+    fi
+  done
+}
 
 curl -sSL "https://github.com/php/php-src/archive/refs/tags/php-$PHP_VERSION.tar.gz" | tar -xzf -
 cd "php-src-php-$PHP_VERSION"
@@ -46,14 +74,7 @@ cd ..
 cd ..
 
 # Leave only static libs on
-if which brew; then
-  ZSTD_PATH=$(brew --prefix zstd)
-  if ls "$ZSTD_PATH"/lib/*.dylib; then
-    for f in "$ZSTD_PATH"/lib/*.dylib; do
-      mv "$f" "$f.bak"
-    done
-  fi
-fi
+hide_dynamic_libs zstd zlib
 
 # Build main php
 mkdir dist
@@ -66,14 +87,11 @@ prefix="$(pwd)/dist"
   --with-pcre-jit --enable-zstd --with-libzstd  \
   --enable-pcntl --enable-posix \
   --enable-sockets \
-  --enable-zts --enable-parallel # zts required by parallel
+  --enable-zts --enable-parallel \
+  --with-openssl --with-zlib
 make LDFLAGS=-ldl -j8
 make install-cli
 strip dist/bin/php
 
 # Return skipped dynamic libs
-if ls "$ZSTD_PATH"/lib/*.dylib.bak; then
-  for f in "$ZSTD_PATH"/lib/*.dylib.bak; do
-    mv "$f" "${f%*.bak}"
-  done
-fi
+restore_dynamic_libs zstd zlib
