@@ -9,11 +9,17 @@
 set -e
 PHP_VERSION="$1"
 ZSTD_REV="4504e4186e79b197cfcb75d4d09aa47ef7d92fe9"
+PARALLEL_REV="c4415c5994cc8c83514d6d7664f16d9789bd670b"
 SKIP_SYSTEM_DEPS="$2"
+
+if [[ -z "$PHP_VERSION" ]]; then
+  echo >&2 "Usage: $0 php-version [skip-system-deps]"
+  exit 1
+fi
 
 if [[ -z "$SKIP_SYSTEM_DEPS" ]]; then
   sudo apt-get update -y
-  sudo apt-get install -y curl build-essential autoconf automake bison re2c libzstd-dev pkg-config
+  sudo apt-get install -y curl build-essential autoconf automake bison re2c libzstd-dev pkg-config git
 fi
 
 curl -sSL "https://github.com/php/php-src/archive/refs/tags/php-$PHP_VERSION.tar.gz" | tar -xzf -
@@ -29,6 +35,12 @@ cd zstd && git checkout "$ZSTD_REV"
 # cd zstd && make && cd ..
 cd ..
 
+# parallel
+git clone https://github.com/krakjoe/parallel.git
+cd parallel && git checkout "$PARALLEL_REV"
+git apply ../../../patches/parallel.patch
+cd ..
+
 cd ..
 
 # Build main php
@@ -40,7 +52,8 @@ prefix="$(pwd)/dist"
   --with-pear=no --disable-cgi --disable-phpdbg \
   --with-pcre-jit --enable-zstd --with-libzstd  \
   --enable-pcntl --enable-posix \
-  --enable-sockets
+  --enable-sockets \
+  --enable-zts --enable-parallel # zts required by parallel
 
 sed -ie 's/-export-dynamic//g' Makefile
 sed -ie 's/-o $(SAPI_CLI_PATH)/-all-static -o $(SAPI_CLI_PATH)/g' Makefile

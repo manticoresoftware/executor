@@ -1,0 +1,562 @@
+diff --git a/src/cache.c b/src/cache.c
+index de0e3b4..ace9e00 100644
+--- a/src/cache.c
++++ b/src/cache.c
+@@ -149,7 +149,11 @@ static zend_op_array* php_parallel_cache_create(const zend_function *source, zen
+             php_parallel_cache_statics(cached->static_variables);
+     }
+ 
++#if PHP_VERSION_ID >= 80200
++    ZEND_MAP_PTR_INIT(cached->static_variables_ptr, cached->static_variables);
++#else
+     ZEND_MAP_PTR_INIT(cached->static_variables_ptr, &cached->static_variables);
++#endif
+     ZEND_MAP_PTR_SET(cached->run_time_cache, NULL);
+ 
+ #if PHP_VERSION_ID >= 80100
+@@ -386,9 +390,15 @@ zend_function* php_parallel_cache_closure(const zend_function *source, zend_func
+         closure->op_array.static_variables =
+             php_parallel_copy_hash_ctor(statics, 1);
+ 
++#if PHP_VERSION_ID >= 80200
++        ZEND_MAP_PTR_INIT(
++            closure->op_array.static_variables_ptr,
++            closure->op_array.static_variables);
++#else
+         ZEND_MAP_PTR_INIT(
+             closure->op_array.static_variables_ptr,
+             &closure->op_array.static_variables);
++#endif
+     }
+ 
+     ZEND_MAP_PTR_NEW(closure->op_array.run_time_cache);
+diff --git a/src/channel.c b/src/channel.c
+index fc89a76..2d9a81d 100644
+--- a/src/channel.c
++++ b/src/channel.c
+@@ -271,6 +271,13 @@ PHP_METHOD(Channel, close)
+     php_parallel_monitor_unlock(php_parallel_channels.monitor);
+ }
+ 
++#ifdef ZEND_BEGIN_ARG_WITH_TENTATIVE_RETURN_TYPE_INFO_EX
++ZEND_BEGIN_ARG_WITH_TENTATIVE_RETURN_TYPE_INFO_EX(php_parallel_channel___toString_arginfo, 0, 0, IS_STRING, 0)
++#else
++ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(php_parallel_channel___toString_arginfo, 0, 0, IS_STRING, 0)
++#endif
++ZEND_END_ARG_INFO()
++
+ PHP_METHOD(Channel, __toString)
+ {
+     php_parallel_channel_t *channel =
+@@ -286,7 +293,7 @@ zend_function_entry php_parallel_channel_methods[] = {
+     PHP_ME(Channel, send, php_parallel_channel_send_arginfo, ZEND_ACC_PUBLIC)
+     PHP_ME(Channel, recv, php_parallel_channel_recv_arginfo, ZEND_ACC_PUBLIC)
+     PHP_ME(Channel, close, php_parallel_channel_close_arginfo, ZEND_ACC_PUBLIC)
+-    PHP_ME(Channel, __toString, php_parallel_no_args_arginfo, ZEND_ACC_PUBLIC)
++    PHP_ME(Channel, __toString, php_parallel_channel___toString_arginfo, ZEND_ACC_PUBLIC)
+     PHP_FE_END
+ };
+ 
+diff --git a/src/check.c b/src/check.c
+index df65650..80df59a 100644
+--- a/src/check.c
++++ b/src/check.c
+@@ -27,6 +27,10 @@ TSRM_TLS struct {
+     HashTable classes;
+ } php_parallel_check_globals;
+ 
++#ifndef ZEND_TYPE_IS_COMPLEX
++#define ZEND_TYPE_IS_COMPLEX ZEND_TYPE_HAS_CLASS
++#endif
++
+ #define PCG(e) php_parallel_check_globals.e
+ 
+ typedef struct _php_parallel_check_task_t {
+@@ -159,8 +163,7 @@ static zend_always_inline zend_bool php_parallel_check_arginfo(const zend_functi
+ 
+     if (function->common.fn_flags & ZEND_ACC_HAS_RETURN_TYPE) {
+         it = function->op_array.arg_info - 1;
+-
+-        if (ZEND_TYPE_IS_SET(it->type) && ZEND_TYPE_HAS_CLASS(it->type)) {
++        if (ZEND_TYPE_IS_SET(it->type) && ZEND_TYPE_IS_COMPLEX(it->type)) {
+             if (!php_parallel_check_type(it->type)) {
+                 php_parallel_exception_ex(
+                     php_parallel_runtime_error_illegal_return_ce,
+@@ -186,7 +189,7 @@ static zend_always_inline zend_bool php_parallel_check_arginfo(const zend_functi
+     }
+ 
+     while (it < end) {
+-        if (ZEND_TYPE_IS_SET(it->type) && ZEND_TYPE_HAS_CLASS(it->type)) {
++        if (ZEND_TYPE_IS_SET(it->type) && ZEND_TYPE_IS_COMPLEX(it->type)) {
+             if (!php_parallel_check_type(it->type)) {
+                 php_parallel_exception_ex(
+                     php_parallel_runtime_error_illegal_parameter_ce,
+@@ -549,7 +552,7 @@ static zend_always_inline php_parallel_check_class_result_t php_parallel_check_c
+             goto _php_parallel_checked_class;
+         }
+ 
+-        if (!ZEND_TYPE_IS_SET(info->type) || !ZEND_TYPE_HAS_CLASS(info->type)) {
++        if (!ZEND_TYPE_IS_SET(info->type) || !ZEND_TYPE_IS_COMPLEX(info->type)) {
+             continue;
+         }
+         
+@@ -557,10 +560,12 @@ static zend_always_inline php_parallel_check_class_result_t php_parallel_check_c
+             zend_type *single;
+             
+             ZEND_TYPE_FOREACH(info->type, single) {
+-                
++#ifdef ZEND_TYPE_HAS_CE
+             	if (ZEND_TYPE_HAS_CE(*single)) {
+             		next = ZEND_TYPE_CE(*single);
+-            	} else if (ZEND_TYPE_HAS_NAME(*single)) {
++            	} else
++#endif
++                if (ZEND_TYPE_HAS_NAME(*single)) {
+             		next = zend_lookup_class(ZEND_TYPE_NAME(*single));
+             	} else {
+             		continue;
+@@ -608,9 +613,12 @@ static zend_always_inline php_parallel_check_class_result_t php_parallel_check_c
+             } ZEND_TYPE_FOREACH_END();
+             
+         } else {
++#ifdef ZEND_TYPE_HAS_CE
+             if (ZEND_TYPE_HAS_CE(info->type)) {
+                 next = ZEND_TYPE_CE(info->type);
+-            } else {
++            } else
++#endif
++            {
+                 next = zend_lookup_class(
+                         ZEND_TYPE_NAME(info->type));
+             }
+diff --git a/src/copy.c b/src/copy.c
+index ed9983b..36be1c3 100644
+--- a/src/copy.c
++++ b/src/copy.c
+@@ -184,7 +184,7 @@ static zend_always_inline HashTable* php_parallel_copy_hash_persistent_inline(
+ 
+     ht->u.flags |= HASH_FLAG_STATIC_KEYS;
+     if (ht->nNumUsed == 0) {
+-	ht->u.flags = HASH_FLAG_UNINITIALIZED;
++        ht->u.flags = HASH_FLAG_UNINITIALIZED;
+         ht->nNextFreeElement = 0;
+         ht->nTableMask = HT_MIN_MASK;
+         HT_SET_DATA_ADDR(ht, &php_parallel_copy_uninitialized_bucket);
+@@ -195,6 +195,28 @@ static zend_always_inline HashTable* php_parallel_copy_hash_persistent_inline(
+     ht->nInternalPointer = 0;
+ 
+     HT_SET_DATA_ADDR(ht, php_parallel_copy_memory_func(HT_GET_DATA_ADDR(ht), HT_USED_SIZE(ht)));
++
++#ifdef HT_PACKED_SIZE
++    // if array is packed, copy it as packed
++    if (HT_IS_PACKED(ht)) {
++        for (idx = 0; idx < ht->nNumUsed; idx++) {
++            zval *zv = ht->arPacked + idx;
++
++            if (Z_TYPE_P(zv) == IS_UNDEF)
++                continue;
++
++            if (Z_OPT_REFCOUNTED_P(zv)) {
++                php_parallel_copy_zval_persistent(
++                    zv,
++                    zv,
++                    php_parallel_copy_string_func,
++                    php_parallel_copy_memory_func);
++            }
++        }
++        ht->nNextFreeElement = ht->nNumUsed;
++        return ht;
++    }
++#endif
+     for (idx = 0; idx < ht->nNumUsed; idx++) {
+         Bucket *p = ht->arData + idx;
+ 
+@@ -240,7 +262,19 @@ static zend_always_inline HashTable* php_parallel_copy_hash_thread(HashTable *so
+         HT_GET_DATA_ADDR(ht),
+         HT_GET_DATA_ADDR(source),
+         HT_HASH_SIZE(ht->nTableMask));
+-
++#ifdef HT_PACKED_SIZE
++    if (HT_IS_PACKED(ht)) {
++        zval *p = ht->arPacked,
++        *q = source->arPacked,
++        *p_end = p + ht->nNumUsed;
++        for (; p < p_end; p++, q++) {
++            *p = *q;
++            if (Z_OPT_REFCOUNTED_P(p)) {
++                PARALLEL_ZVAL_COPY(p, q, 0);
++            }
++        }
++    } else
++#endif
+     if (ht->u.flags & HASH_FLAG_STATIC_KEYS) {
+         Bucket *p = ht->arData,
+         *q = source->arData,
+@@ -306,9 +340,6 @@ HashTable *php_parallel_copy_hash_persistent(HashTable *source,
+ 
+ void php_parallel_copy_hash_dtor(HashTable *table, zend_bool persistent) {
+     if (GC_DELREF(table) == (persistent ? 1 : 0)) {
+-        Bucket *p = table->arData,
+-               *end = p + table->nNumUsed;
+-
+         if (!persistent) {
+             GC_REMOVE_FROM_BUFFER(table);
+             GC_TYPE_INFO(table) =
+@@ -319,7 +350,21 @@ void php_parallel_copy_hash_dtor(HashTable *table, zend_bool persistent) {
+ #endif
+         }
+ 
++#ifdef HT_PACKED_SIZE
++        if (HT_IS_PACKED(table)){
++            zval *p = table->arPacked,
++                *end = p + table->nNumUsed;
++            while (p < end) {
++                if (Z_OPT_REFCOUNTED_P(p)) {
++                    PARALLEL_ZVAL_DTOR(p);
++                }
++                p++;
++            }
++        } else
++#endif
+         if (HT_HAS_STATIC_KEYS_ONLY(table)) {
++            Bucket *p = table->arData,
++                *end = p + table->nNumUsed;
+             while (p < end) {
+                 if (Z_OPT_REFCOUNTED(p->val)) {
+                     PARALLEL_ZVAL_DTOR(&p->val);
+@@ -327,6 +372,8 @@ void php_parallel_copy_hash_dtor(HashTable *table, zend_bool persistent) {
+                 p++;
+             }
+         } else {
++            Bucket *p = table->arData,
++                *end = p + table->nNumUsed;
+             while (p < end) {
+                 if (Z_ISUNDEF(p->val)) {
+                     p++;
+@@ -381,7 +428,11 @@ static zend_always_inline void php_parallel_copy_closure_init_run_time_cache(zen
+     void *rtc;
+ 
+     function->fn_flags |= ZEND_ACC_HEAP_RT_CACHE;
++#if PHP_VERSION_ID >= 80200
++    rtc = emalloc(function->cache_size);
+ 
++    ZEND_MAP_PTR_INIT(function->run_time_cache, rtc);
++#else
+     rtc = emalloc(sizeof(void*) + function->cache_size);
+ 
+     ZEND_MAP_PTR_INIT(function->run_time_cache, rtc);
+@@ -389,6 +440,7 @@ static zend_always_inline void php_parallel_copy_closure_init_run_time_cache(zen
+     rtc = (char*)rtc + sizeof(void*);
+ 
+     ZEND_MAP_PTR_SET(function->run_time_cache, rtc);
++#endif
+ 
+     memset(rtc, 0, function->cache_size);
+ }
+@@ -423,7 +475,11 @@ static zend_always_inline zend_object* php_parallel_copy_closure_thread(zend_obj
+             php_parallel_copy_hash_ctor(function->static_variables, 0);
+     }
+ 
++#if PHP_VERSION_ID >= 80200
++    ZEND_MAP_PTR_INIT(function->static_variables_ptr, function->static_variables);
++#else
+     ZEND_MAP_PTR_INIT(function->static_variables_ptr, &function->static_variables);
++#endif
+ 
+     php_parallel_copy_closure_init_run_time_cache(function);
+ 
+diff --git a/src/events.c b/src/events.c
+index ceb2552..e9f9fb0 100644
+--- a/src/events.c
++++ b/src/events.c
+@@ -230,6 +230,13 @@ PHP_METHOD(Events, poll)
+     php_parallel_events_poll(events, return_value);
+ }
+ 
++#ifdef ZEND_BEGIN_ARG_WITH_TENTATIVE_RETURN_TYPE_INFO_EX
++ZEND_BEGIN_ARG_WITH_TENTATIVE_RETURN_TYPE_INFO_EX(php_parallel_events_count_arginfo, 0, 0, IS_LONG, 0)
++#else
++ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO(php_parallel_events_count_arginfo, IS_LONG, 0)
++#endif
++ZEND_END_ARG_INFO()
++
+ PHP_METHOD(Events, count)
+ {
+     php_parallel_events_t *events = php_parallel_events_from(getThis());
+@@ -247,7 +254,7 @@ zend_function_entry php_parallel_events_methods[] = {
+     PHP_ME(Events, setBlocking, php_parallel_events_set_blocking_arginfo, ZEND_ACC_PUBLIC)
+     PHP_ME(Events, setTimeout,  php_parallel_events_set_timeout_arginfo, ZEND_ACC_PUBLIC)
+     PHP_ME(Events, poll,        php_parallel_events_poll_arginfo, ZEND_ACC_PUBLIC)
+-    PHP_ME(Events, count,       php_parallel_no_args_arginfo, ZEND_ACC_PUBLIC)
++    PHP_ME(Events, count,       php_parallel_events_count_arginfo, ZEND_ACC_PUBLIC)
+     PHP_FE_END
+ };
+ 
+diff --git a/src/runtime.h b/src/runtime.h
+index 5ced379..9e20883 100644
+--- a/src/runtime.h
++++ b/src/runtime.h
+@@ -18,12 +18,17 @@
+ #ifndef HAVE_PARALLEL_RUNTIME_H
+ #define HAVE_PARALLEL_RUNTIME_H
+ 
++#if PHP_VERSION_ID < 80200
++# define zend_atomic_bool zend_bool
++# define zend_atomic_bool_store(dest, value) (*(dest) = value)
++#endif
++
+ typedef struct _php_parallel_runtime_t {
+     pthread_t                        thread;
+     php_parallel_monitor_t          *monitor;
+     zend_string                     *bootstrap;
+     struct {
+-        zend_bool                   *interrupt;
++        zend_atomic_bool                   *interrupt;
+     } child;
+     struct {
+         void                        *server;
+diff --git a/src/scheduler.c b/src/scheduler.c
+index 1a9a0ca..1eabe28 100644
+--- a/src/scheduler.c
++++ b/src/scheduler.c
+@@ -23,10 +23,6 @@
+ TSRM_TLS php_parallel_runtime_t* php_parallel_scheduler_context = NULL;
+ TSRM_TLS php_parallel_future_t* php_parallel_scheduler_future = NULL;
+ 
+-static void zend_disable_function(const char *name, size_t length) {
+-	zend_hash_str_del(CG(function_table), name, length);
+-}
+-
+ void (*zend_interrupt_handler)(zend_execute_data*) = NULL;
+ 
+ static zend_always_inline int php_parallel_scheduler_list_delete(void *lhs, void *rhs) {
+@@ -62,6 +58,25 @@ void php_parallel_scheduler_destroy(php_parallel_runtime_t *runtime) {
+     zend_llist_destroy(&runtime->schedule);
+ }
+ 
++static PHP_FUNCTION(parallel_display_disabled_function)
++{
++    zend_throw_error(NULL, "Call to undefined function %s()", get_active_function_name());
++}
++
++// port from php 7.4 code
++static int php_parallel_disable_function(const char* function_name, size_t function_name_length) {
++    zend_internal_function *func;
++	if ((func = zend_hash_str_find_ptr(CG(function_table), function_name, function_name_length))) {
++		//zend_free_internal_arg_info(func);
++	    func->fn_flags &= ~(ZEND_ACC_VARIADIC | ZEND_ACC_HAS_TYPE_HINTS | ZEND_ACC_HAS_RETURN_TYPE);
++		func->num_args = 0;
++		func->arg_info = NULL;
++		func->handler = ZEND_FN(parallel_display_disabled_function);
++		return SUCCESS;
++	}
++	return FAILURE;
++}
++
+ static zend_always_inline php_parallel_runtime_t* php_parallel_scheduler_setup(php_parallel_runtime_t *runtime) {
+     php_parallel_scheduler_context = runtime;
+ 
+@@ -76,10 +91,11 @@ static zend_always_inline php_parallel_runtime_t* php_parallel_scheduler_setup(p
+     PG(expose_php)       = 0;
+     PG(auto_globals_jit) = 1;
+ 
+-    php_request_startup();
++    // we cannot use zend_disable_functions to disable functions at runtime since PHP 8.2
++    php_parallel_disable_function(ZEND_STRL("setlocale"));
++    php_parallel_disable_function(ZEND_STRL("dl"));
+ 
+-    zend_disable_function(ZEND_STRL("setlocale"));
+-    zend_disable_function(ZEND_STRL("dl"));
++    php_request_startup();
+ 
+     PG(during_request_startup)  = 0;
+     SG(sapi_started)            = 0;
+@@ -196,7 +212,7 @@ static zend_always_inline zend_bool php_parallel_scheduler_pop(php_parallel_runt
+         ZEND_CALL_TOP_FUNCTION,
+         php_parallel_copy_function(function, 0),
+         ZEND_CALL_NUM_ARGS(head->frame),
+-        NULL);
++        scope);
+ 
+     if (scope != function->op_array.scope) {
+         el->frame->func->op_array.scope = scope;
+@@ -220,10 +236,15 @@ static zend_always_inline zend_bool php_parallel_scheduler_pop(php_parallel_runt
+ 
+         el->frame->func->op_array.static_variables =
+             php_parallel_copy_hash_ctor(statics, 0);
+-
++#if PHP_VERSION_ID >= 80200
++        ZEND_MAP_PTR_INIT(
++            el->frame->func->op_array.static_variables_ptr,
++            el->frame->func->op_array.static_variables);
++#else
+         ZEND_MAP_PTR_INIT(
+             el->frame->func->op_array.static_variables_ptr,
+             &el->frame->func->op_array.static_variables);
++#endif
+ 
+         php_parallel_copy_hash_dtor(statics, 1);
+     }
+@@ -289,7 +310,8 @@ static void php_parallel_scheduler_run(php_parallel_runtime_t *runtime, zend_exe
+                     frame->func->op_array.static_variables_ptr);
+ 
+             if (!(GC_FLAGS(statics) & IS_ARRAY_IMMUTABLE)) {
+-                zend_array_destroy(statics);
++                //zend_array_destroy(statics);
++                php_parallel_copy_hash_dtor(statics, 1);
+             }
+         }
+ 
+@@ -530,7 +552,7 @@ void php_parallel_scheduler_join(php_parallel_runtime_t *runtime, zend_bool kill
+     if (kill){
+         php_parallel_monitor_set(runtime->monitor, PHP_PARALLEL_KILLED);
+ 
+-        *(runtime->child.interrupt) = 1;
++        zend_atomic_bool_store(runtime->child.interrupt, true);
+     } else {
+         php_parallel_monitor_set(runtime->monitor, PHP_PARALLEL_CLOSE);
+     }
+@@ -566,7 +588,7 @@ zend_bool php_parallel_scheduler_cancel(php_parallel_future_t *future) {
+         php_parallel_monitor_lock(future->monitor);
+ 
+         if (!php_parallel_monitor_check(future->monitor, PHP_PARALLEL_READY)) {
+-            *(future->runtime->child.interrupt) = 1;
++            zend_atomic_bool_store(future->runtime->child.interrupt, true);
+ 
+             php_parallel_monitor_set(future->monitor, PHP_PARALLEL_CANCELLED);
+             php_parallel_monitor_wait_locked(future->monitor, PHP_PARALLEL_READY);
+diff --git a/tests/base/023.phpt b/tests/base/023.phpt
+index 89a2ee5..9582130 100644
+--- a/tests/base/023.phpt
++++ b/tests/base/023.phpt
+@@ -14,7 +14,7 @@ try {
+ 	$parallel->run(function(){
+ 		thrower();
+ 	});
+-} catch (Error $er) { 
++} catch (Error $er) {
+ 	/* can't catch here what is thrown in runtime */
+ }
+ ?>
+@@ -22,6 +22,7 @@ try {
+ Fatal error: Uncaught %s in %s:7
+ Stack trace:
+ #0 %s(6): thrower()
+-#1 {main}
++#1 [internal function]: {closure}()
++#2 {main}
+   thrown in %s on line 7
+ 
+diff --git a/tests/base/030.phpt b/tests/base/030.phpt
+index 8dac92c..56fb171 100644
+--- a/tests/base/030.phpt
++++ b/tests/base/030.phpt
+@@ -20,7 +20,8 @@ $future->value();
+ --EXPECTF--
+ Fatal error: Uncaught Exception in %s:4
+ Stack trace:
+-#0 {main}
++#0 [internal function]: {closure}()
++#1 {main}
+   thrown in %s on line 4
+ 
+ 
+diff --git a/tests/base/037.phpt b/tests/base/037.phpt
+index 29ac029..65c63d6 100644
+--- a/tests/base/037.phpt
++++ b/tests/base/037.phpt
+@@ -12,7 +12,7 @@ $parallel = new \parallel\Runtime(sprintf("%s/bootstrap.inc", __DIR__));
+ 
+ $future = $parallel->run(function(){
+ 	$foo = new Foo();
+-	
++
+ 	return $foo->bar([42],new stdClass);
+ });
+ 
+@@ -23,6 +23,7 @@ Fatal error: Uncaught RuntimeException: message in %s:12
+ Stack trace:
+ #0 %s(19): Qux->method(Array, Object(stdClass))
+ #1 %s(7): Foo->bar(Array, Object(stdClass))
+-#2 {main}
++#2 [internal function]: {closure}()
++#3 {main}
+   thrown in %s on line 12
+ 
+diff --git a/tests/base/disabled_functions.phpt b/tests/base/disabled_functions.phpt
+new file mode 100644
+index 0000000..7afd452
+--- /dev/null
++++ b/tests/base/disabled_functions.phpt
+@@ -0,0 +1,50 @@
++--TEST--
++parallel disabled functions
++--SKIPIF--
++<?php
++if (!extension_loaded('parallel')) {
++	die("skip parallel not loaded");
++}
++if (!function_exists("dl") && !function_exists("setlocale")) {
++    die("skip nothing to check with");
++}
++?>
++--FILE--
++<?php
++$parallel = new \parallel\Runtime();
++
++if (function_exists("setlocale")) {
++    $future = $parallel->run(function() {
++        try {
++            setlocale(LC_ALL, "0");
++        } catch (Error $e) {
++            if ($e->getMessage() !== 'Call to undefined function setlocale()') {
++                echo "failed check function setlocale disabling" . PHP_EOL;
++            }
++        }
++    });
++
++    $future->value();
++
++    setlocale(LC_ALL, "0");
++}
++
++if (function_exists("dl")) {
++    $future = $parallel->run(function() {
++        try {
++            dl(":/invalid");
++        } catch (Error $e) {
++            if ($e->getMessage() !== 'Call to undefined function dl()') {
++                echo "failed check function dl disabling" . PHP_EOL;
++            }
++        }
++    });
++    $future->value();
++}
++
++echo "Done" . PHP_EOL;
++
++?>
++--EXPECT--
++Done
++
+diff --git a/tests/events/012.phpt b/tests/events/012.phpt
+index d9de89b..31311be 100644
+--- a/tests/events/012.phpt
++++ b/tests/events/012.phpt
+@@ -46,7 +46,15 @@ object(parallel\Events\Event)#%d (%d) {
+     ["line":protected]=>
+     int(7)
+     ["trace":"Exception":private]=>
+-    array(0) {
++    array(1) {
++      [0]=>
++      array(2) {
++        ["function"]=>
++        string(9) "{closure}"
++        ["args"]=>
++        array(0) {
++        }
++      }
+     }
+     ["previous":"Exception":private]=>
+     NULL
