@@ -34,6 +34,7 @@ We build executor from `PHP 8.1.10` with the following extensions enabled and co
 * posix
 * pcre (JIT)
 * zstd
+* parallel
 
 ## Build from source
 
