@@ -35,7 +35,8 @@ We build executor from `PHP 8.1.10` with the following extensions enabled and co
 * pcre (JIT)
 * zstd
 * parallel
-
+* openssl
+* zlib
 ## Build from source
 
 The process of building the executor from source is simple and requires the same build tools needed to build PHP.
