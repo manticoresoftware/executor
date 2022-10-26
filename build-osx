@@ -26,7 +26,10 @@ if [[ -z "$SKIP_SYSTEM_DEPS" ]]; then
 fi
 
 if which brew; then
-  brew link openssl
+  brew link openssl@1.1
+  export OPENSSL_PREFIX="$(brew --prefix openssl@1.1)"
+  export OPENSSL_CFLAGS="-I${OPENSSL_PREFIX}/include"
+  export OPENSSL_LIBS="-L${OPENSSL_PREFIX}/lib -lcrypto -lssl"
 fi
 
 hide_dynamic_libs() {
