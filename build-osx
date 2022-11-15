@@ -8,7 +8,7 @@
 
 set -e
 PHP_VERSION="$1"
-ZSTD_REV="4504e4186e79b197cfcb75d4d09aa47ef7d92fe9"
+ZSTD_REV="2dfcd6524ccdcef6dfdaa97d7f3716b866885093"
 PARALLEL_REV="25ba1ee594c350b0e3e239c6b995d772d0e4fc9c"
 SKIP_SYSTEM_DEPS="$2"
 
@@ -63,7 +63,7 @@ cd "php-src-php-$PHP_VERSION"
 cd ext
 
 #  zstd
-git clone --recursive --depth=1 https://github.com/kjdev/php-ext-zstd.git
+git clone --recursive --depth=1 https://github.com/manticoresoftware/php-ext-zstd
 mv php-ext-zstd zstd
 cd zstd && git checkout "$ZSTD_REV"
 # cd zstd && make && cd ..
