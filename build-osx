@@ -7,29 +7,24 @@
 # you can find it at https://www.php.net/license/3_01.txt
 
 set -e
-PHP_VERSION="$1"
-ZSTD_REV="4504e4186e79b197cfcb75d4d09aa47ef7d92fe9"
-PARALLEL_REV="25ba1ee594c350b0e3e239c6b995d772d0e4fc9c"
-SKIP_SYSTEM_DEPS="$2"
-
-if [[ -z "$PHP_VERSION" ]]; then
-  echo >&2 "Usage: $0 php-version [skip-system-deps]"
-  exit 1
-fi
-
-# sudo xcode-select --install
-# We introduce this parameter to make it easier to reuse the code
-# and build it for homebrew with same script
-if [[ -z "$SKIP_SYSTEM_DEPS" ]]; then
+install_deps() {
   brew upgrade
-  brew install curl autoconf automake bison re2c zstd git openssl zlib
-fi
+  brew install curl autoconf automake bison re2c zstd git openssl zlib cmake
+}
+
+install_dev_deps() {
+  brew install libxml2 oniguruma libgmp
+}
+
+export -f install_deps install_dev_deps
+. ./build-bash-base.sh "$@"
 
 if which brew; then
   brew link openssl@1.1
-  export OPENSSL_PREFIX="$(brew --prefix openssl@1.1)"
-  export OPENSSL_CFLAGS="-I${OPENSSL_PREFIX}/include"
-  export OPENSSL_LIBS="-L${OPENSSL_PREFIX}/lib -lcrypto -lssl"
+  OPENSSL_PREFIX="$(brew --prefix openssl@1.1)"
+  OPENSSL_CFLAGS="-I${OPENSSL_PREFIX}/include"
+  OPENSSL_LIBS="-L${OPENSSL_PREFIX}/lib -lcrypto -lssl"
+  export OPENSSL_PREFIX OPENSSL_CFLAGS OPENSSL_LIBS
 fi
 
 hide_dynamic_libs() {
@@ -56,43 +51,29 @@ restore_dynamic_libs() {
   done
 }
 
-curl -sSL "https://github.com/php/php-src/archive/refs/tags/php-$PHP_VERSION.tar.gz" | tar -xzf -
-cd "php-src-php-$PHP_VERSION"
-
-# Build extra extensions
-cd ext
-
-#  zstd
-git clone --recursive --depth=1 https://github.com/kjdev/php-ext-zstd.git
-mv php-ext-zstd zstd
-cd zstd && git checkout "$ZSTD_REV"
-# cd zstd && make && cd ..
-cd ..
-
-# parallel
-git clone https://github.com/manticoresoftware/krakjoe-parallel.git parallel
-cd parallel && git checkout "$PARALLEL_REV"
-cd ..
-
-cd ..
-
 # Leave only static libs on
 hide_dynamic_libs zstd zlib
 
-# Build main php
-mkdir dist
-prefix="$(pwd)/dist"
-./buildconf --force
+MAKE_LDFLAGS=
+ENABLE_SHARED=yes
+ENABLE_STATIC=no
+if [[ "$BUILD_STATIC" == 1 ]]; then
+  MAKE_LDFLAGS=-ldl
+  ENABLE_SHARED=no
+  ENABLE_STATIC=yes
+fi
+
 ./configure YACC=/usr/local/Cellar/bison/3.8.2/bin/bison \
-  CFLAGS="-O3" --prefix="$prefix" --disable-all \
-  --enable-shared=no --enable-static=yes --with-layout=GNU \
+  CFLAGS="-O3" --prefix="$BUILD_PREFIX" --disable-all \
+  --enable-shared=$ENABLE_SHARED --enable-static=$ENABLE_STATIC --with-layout=GNU \
   --with-pear=no --disable-cgi --disable-phpdbg \
   --with-pcre-jit --enable-zstd --with-libzstd  \
   --enable-pcntl --enable-posix \
   --enable-sockets \
   --enable-zts --enable-parallel \
-  --with-openssl --with-zlib
-make LDFLAGS=-ldl -j8
+  --with-openssl --with-zlib \
+  "${BUILD_EXTRA[@]}"
+make LDFLAGS=$MAKE_LDFLAGS -j8
 make install-cli
 strip dist/bin/php
 
