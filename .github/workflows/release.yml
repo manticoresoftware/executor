@@ -7,7 +7,7 @@ on:
 
 env:
   APP_NAME: 'manticore-executor'
-  PHP_VERSION: '8.1.11'
+  PHP_VERSION: '8.1.12'
   MAINTAINER: 'Manticore'
   DESC: 'Custom built PHP executor for Manticore.'
   EXTRA_NAME: 'manticore-extra'
@@ -42,10 +42,10 @@ jobs:
           echo "$assets"
           mkdir -p "dist/$assets"
           if [[ "${{ runner.os }}" == Windows ]]; then
-            mv php-src-php-${{ env.PHP_VERSION }}/dist/php.exe php-src-php-${{ env.PHP_VERSION }}/dist/${{ env.APP_NAME }}.exe
-            cp php-src-php-${{ env.PHP_VERSION }}/dist/* "dist/$assets/"
+            mv build/dist/php.exe build/dist/${{ env.APP_NAME }}.exe
+            cp build/dist/* "dist/$assets/"
           else
-            cp php-src-php-${{ env.PHP_VERSION }}/dist/bin/php "dist/$assets/${{ env.APP_NAME }}"
+            cp build/dist/bin/php "dist/$assets/${{ env.APP_NAME }}"
           fi
           cp README.* "dist/$assets/"
           (
@@ -88,7 +88,7 @@ jobs:
           assets="${{ env.APP_NAME }}_${{ github.ref_name }}-$( date +%y%m%d )-${GITHUB_SHA:0:7}_$(echo "${{ runner.os }}" | tr '[:upper:]' '[:lower:]')_arm64"
           echo "$assets"
           mkdir -p "dist/$assets"
-          cp php-src-php-${{ env.PHP_VERSION }}/dist/bin/php "dist/$assets/${{ env.APP_NAME }}"
+          cp build/dist/bin/php "dist/$assets/${{ env.APP_NAME }}"
           cp README.* "dist/$assets/"
           (
             cd dist
@@ -115,8 +115,8 @@ jobs:
         run: |
           mkdir -p .debpkg/usr/bin
           mkdir -p .rpmpkg/usr/bin
-          cp -p php-src-php-${{ env.PHP_VERSION }}/dist/bin/php .debpkg/usr/bin/${{ env.APP_NAME }}
-          cp -p php-src-php-${{ env.PHP_VERSION }}/dist/bin/php .rpmpkg/usr/bin/${{ env.APP_NAME }}
+          cp -p build/dist/bin/php .debpkg/usr/bin/${{ env.APP_NAME }}
+          cp -p build/dist/bin/php .rpmpkg/usr/bin/${{ env.APP_NAME }}
       - uses: manticoresoftware/actions-build-deb-action@master
         with:
           package: ${{ env.APP_NAME }}
@@ -184,8 +184,8 @@ jobs:
         run: |
           mkdir -p .debpkg/usr/bin
           mkdir -p .rpmpkg/usr/bin
-          cp -p php-src-php-${{ env.PHP_VERSION }}/dist/bin/php .debpkg/usr/bin/${{ env.APP_NAME }}
-          cp -p php-src-php-${{ env.PHP_VERSION }}/dist/bin/php .rpmpkg/usr/bin/${{ env.APP_NAME }}
+          cp -p build/dist/bin/php .debpkg/usr/bin/${{ env.APP_NAME }}
+          cp -p build/dist/bin/php .rpmpkg/usr/bin/${{ env.APP_NAME }}
 
       - uses: manticoresoftware/actions-build-deb-action@master
         with:
@@ -227,7 +227,7 @@ jobs:
             RPMBUILD_SOURCE_DIR="$RPMBUILD_DIR/SOURCES"
             RPMBUILD_SPEC_DIR="$RPMBUILD_DIR/SPECS"
             mkdir -p .rpmpkg/usr/bin
-            cp -p php-src-php-${{ env.PHP_VERSION }}/dist/bin/php .rpmpkg/usr/bin/${{ env.APP_NAME }}
+            cp -p build/dist/bin/php .rpmpkg/usr/bin/${{ env.APP_NAME }}
             WORKDIR="/tmp/work"
             mkdir "$WORKDIR"
             spec_file=main.spec

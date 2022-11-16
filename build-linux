@@ -7,55 +7,44 @@
 # you can find it at https://www.php.net/license/3_01.txt
 
 set -e
-PHP_VERSION="$1"
-ZSTD_REV="4504e4186e79b197cfcb75d4d09aa47ef7d92fe9"
-PARALLEL_REV="25ba1ee594c350b0e3e239c6b995d772d0e4fc9c"
-SKIP_SYSTEM_DEPS="$2"
-
-if [[ -z "$PHP_VERSION" ]]; then
-  echo >&2 "Usage: $0 php-version [skip-system-deps]"
-  exit 1
-fi
-
-if [[ -z "$SKIP_SYSTEM_DEPS" ]]; then
+install_deps() {
   sudo apt-get update -y
-  sudo apt-get install -y curl build-essential autoconf automake bison re2c libzstd-dev pkg-config git libssl-dev zlib1g-dev
+  sudo apt-get install -y curl build-essential autoconf automake bison re2c libzstd-dev pkg-config git libssl-dev zlib1g-dev cmake
+}
+
+install_dev_deps() {
+  sudo apt-get install -y libxml2-dev libonig-dev libgmp-dev libzip-dev
+}
+
+export -f install_deps install_dev_deps
+. build-bash-base.sh "$@"
+
+CONFIGURE_LDFLAGS=
+MAKE_LDFLAGS=
+ENABLE_SHARED=yes
+ENABLE_STATIC=no
+if [[ "$BUILD_STATIC" == 1 ]]; then
+  CONFIGURE_LDFLAGS=-static
+  MAKE_LDFLAGS=-ldl
+  ENABLE_SHARED=no
+  ENABLE_STATIC=yes
 fi
 
-curl -sSL "https://github.com/php/php-src/archive/refs/tags/php-$PHP_VERSION.tar.gz" | tar -xzf -
-cd "php-src-php-$PHP_VERSION"
-
-# Build extra extensions
-cd ext
-
-#  zstd
-git clone --recursive --depth=1 https://github.com/kjdev/php-ext-zstd.git
-mv php-ext-zstd zstd
-cd zstd && git checkout "$ZSTD_REV"
-# cd zstd && make && cd ..
-cd ..
-
-# parallel
-git clone https://github.com/manticoresoftware/krakjoe-parallel.git parallel
-cd parallel && git checkout "$PARALLEL_REV"
-cd ..
-
-cd ..
-
-# Build main php
-mkdir dist
-prefix="$(pwd)/dist"
-./buildconf --force
-./configure LDFLAGS=-static CFLAGS="-O3" --prefix="$prefix" --disable-all \
-  --enable-shared=no --enable-static=yes --with-layout=GNU \
+./configure LDFLAGS=$CONFIGURE_LDFLAGS CFLAGS="-O3" --prefix="$BUILD_PREFIX" --disable-all \
+  --enable-shared=$ENABLE_SHARED --enable-static=$ENABLE_STATIC --with-layout=GNU \
   --with-pear=no --disable-cgi --disable-phpdbg \
   --with-pcre-jit --enable-zstd --with-libzstd  \
   --enable-pcntl --enable-posix \
   --enable-sockets \
   --enable-zts --enable-parallel \
-  --with-openssl --with-zlib
-sed -ie 's/-export-dynamic//g' Makefile
-sed -ie 's/-o $(SAPI_CLI_PATH)/-all-static -o $(SAPI_CLI_PATH)/g' Makefile
-make LDFLAGS=-ldl -j8
+  --with-openssl --with-zlib \
+  "${BUILD_EXTRA[@]}"
+
+if [[ "$BUILD_STATIC" == 1 ]]; then
+  sed -ie 's/-export-dynamic//g' Makefile
+  sed -ie 's/-o $(SAPI_CLI_PATH)/-all-static -o $(SAPI_CLI_PATH)/g' Makefile
+fi
+
+make LDFLAGS=$MAKE_LDFLAGS -j8
 make install-cli
 strip --strip-all dist/bin/php
