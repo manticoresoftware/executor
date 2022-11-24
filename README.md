@@ -22,7 +22,7 @@ Manticore Executor is a custom built PHP binary which:
 | Debian Bullseye | arm64, x86_64 | ✅ repo.manticoresearch.com|
 | MacOS | x86_64 | ✅ repo.manticoresearch.com, homebrew custom tap|
 | MacOS | arm64 | ✅ homebrew custom tap|
-| Windows | - | ⛔️ work in progress|
+| Windows | x86_64 | ✅ repo.manticoresearch.com |
 
 ## Extensions supported by the executor
 
@@ -85,14 +85,13 @@ Several scripts used to build the final package:
 * `build-linux`
 * `build-osx`
 
-The scripts accept a version of PHP as a parameter. The current version is `8.1.12`. To build the binary, you should run the following example:
+The scripts accept a version of PHP as a parameter. The current version is `8.1.13`. To build the binary, you should run the following example:
 
 ```bash
-./build-linux "8.1.12"
+./build-linux "8.1.13"
 ```
 
-The command above will build the package on Linux with **PHP** `8.1.12`. Once it's done, you can find your binary in folder `dist/bin`.
-
+The command above will build the package on Linux with **PHP** `8.1.13`. Once it's done, you can find your binary in folder `dist/bin`.
 
 ### Build for MacOS arm64
 
