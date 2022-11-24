@@ -6,7 +6,7 @@ ARG REV=main
 RUN apt-get update -y && apt-get install -y sudo git && \
   git clone https://github.com/manticoresoftware/executor.git && \
   cd executor && git checkout $REV && \
-  ./build-linux 8.1.12 0 $BUILD_DEV && \
+  ./build-linux 8.1.13 0 $BUILD_DEV && \
   mv build/dist/bin/php /usr/bin/manticore-executor && \
   ln -s /usr/bin/manticore-executor /usr/bin/php && \
   cd .. && rm -fr executor

@@ -36,7 +36,7 @@ mv "php-src-php-$PHP_VERSION" build && cd "$_"
 cd ext
 
 #  zstd
-git clone --recursive --depth=1 https://github.com/kjdev/php-ext-zstd.git
+git clone --recursive --depth=1 https://github.com/manticoresoftware/php-ext-zstd.git
 mv php-ext-zstd zstd
 cd zstd && git checkout "$ZSTD_REV"
 # cd zstd && make && cd ..
