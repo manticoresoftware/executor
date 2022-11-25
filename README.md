@@ -37,6 +37,11 @@ We build executor from `PHP 8.1.10` with the following extensions enabled and co
 * parallel
 * openssl
 * zlib
+
+## Windows build
+
+You can download a prebuilt manticore-executor package from [here](https://repo.manticoresearch.com/repository/manticoresearch_windows/dev/x64/manticore-executor-0.3.5-221125-a40554c-x64.zip).
+
 ## Build from source
 
 The process of building the executor from source is simple and requires the same build tools needed to build PHP.
@@ -56,10 +61,6 @@ You should remove that quarantine flag and run the binary to fix this issue. Jus
 ```sh
 xattr -dr com.apple.quarantine manticore-executor
 ```
-
-### Windows support
-
-You can download a prebuilt manticore-executor package from [here](https://repo.manticoresearch.com/repository/manticoresearch_windows/dev/x64/manticore-executor-0.3.5-221125-a40554c-x64.zip).
 
 ## Deployment
 
@@ -111,3 +112,4 @@ brew bottle manticoresoftware/manticore/manticore-executor
 3. Download and add to PHP folder [ZSTD lib](https://pecl.php.net/package/zstd/0.11.0/windows) from PECL binary builds
 4. Rename `php.exe` -> `manticore-executor.exe`
 5. Rename and edit `php.ini-production` -> `php.ini` and add `extension=...` with wanted extensions to load
+6. Zip the final archive and upload to https://repo.manticoresearch.com/repository/manticoresearch_windows/dev/x64/
