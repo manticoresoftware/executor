@@ -59,7 +59,7 @@ xattr -dr com.apple.quarantine manticore-executor
 
 ### Windows support
 
-We do not support Windows for now but this work is in progress. For now you can just install PHP 8.1.10+ and enable the requested extensions (see above).
+You can download a prebuilt manticore-executor package from [here](https://repo.manticoresearch.com/repository/manticoresearch_windows/dev/x64/manticore-executor-0.3.5-221125-a40554c-x64.zip).
 
 ## Deployment
 
@@ -102,3 +102,12 @@ Once you update the manticore-executor formula in [homebrew-manticore](https://g
 ```bash
 brew install --build-bottle manticoresoftware/manticore/manticore-executor
 brew bottle manticoresoftware/manticore/manticore-executor
+```
+
+### Prepare a package for Windows
+
+1. Download pre-built thread-safe version of [PHP](https://windows.php.net/download/)
+2. Download and add to php folder parallel lib from official [artifacts](https://github.com/krakjoe/parallel/actions/workflows/windows.yml)
+3. Download and add to PHP folder [ZSTD lib](https://pecl.php.net/package/zstd/0.11.0/windows) from PECL binary builds
+4. Rename `php.exe` -> `manticore-executor.exe`
+5. Rename and edit `php.ini-production` -> `php.ini` and add `extension=...` with wanted extensions to load
