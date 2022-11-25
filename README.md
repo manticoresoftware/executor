@@ -38,10 +38,6 @@ We build executor from `PHP 8.1.10` with the following extensions enabled and co
 * openssl
 * zlib
 
-## Windows build
-
-You can download a prebuilt manticore-executor package from [here](https://repo.manticoresearch.com/repository/manticoresearch_windows/dev/x64/manticore-executor-0.3.5-221125-a40554c-x64.zip).
-
 ## Build from source
 
 The process of building the executor from source is simple and requires the same build tools needed to build PHP.
