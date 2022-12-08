@@ -705,6 +705,14 @@ jobs:
             ext: rpm
             script: bin/upload_repo_rpm
             distro: 8
+          - artifact: artifact-extra-rpm-amd64
+            ext: rpm
+            script: bin/upload_repo_rpm
+            distro: 9
+          - artifact: artifact-extra-rpm-arm64
+            ext: rpm
+            script: bin/upload_repo_rpm
+            distro: 9
     steps:
       - uses: actions/checkout@v3
       - run: mkdir build
