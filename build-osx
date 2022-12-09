@@ -72,6 +72,7 @@ fi
   --enable-sockets \
   --enable-zts --enable-parallel \
   --with-openssl --with-zlib \
+  --enable-opcache \
   "${BUILD_EXTRA[@]}"
 make LDFLAGS=$MAKE_LDFLAGS -j8
 make install-cli

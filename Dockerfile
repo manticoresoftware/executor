@@ -21,4 +21,4 @@ RUN test "$BUILD_DEV" -eq 1 && php -r "copy('https://getcomposer.org/installer',
 WORKDIR /src
 
 # Build on silicon chip mac:
-#  docker buildx build --build-arg BUILD_DEV=1 --build-arg REV=v0.3.5 --platform linux/amd64 -t manticoresearch/manticore-executor:0.3.5 --push .
+#  docker buildx build --build-arg BUILD_DEV=1 --build-arg REV=v0.4.1 --platform linux/amd64 -t manticoresearch/manticore-executor:0.4.1 --push .
