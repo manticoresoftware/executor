@@ -47,7 +47,6 @@ ENABLE_STATIC=yes
   --enable-sockets \
   --enable-zts --enable-parallel \
   --with-openssl --with-zlib \
-  --enable-opcache \
   "${BUILD_EXTRA[@]}"
 
 sed -ie 's/-export-dynamic//g' Makefile

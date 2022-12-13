@@ -41,7 +41,6 @@ fi
   --enable-sockets \
   --enable-zts --enable-parallel \
   --with-openssl --with-zlib \
-  --enable-opcache \
   "${BUILD_EXTRA[@]}"
 
 if [[ "$BUILD_STATIC" == 1 ]]; then
