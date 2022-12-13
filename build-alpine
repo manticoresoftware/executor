@@ -8,6 +8,17 @@
 
 set -e
 install_deps() {
+  arch=$(arch)
+  # Do basic configuration of the system, and install build tools
+  apk update && \
+    apk add binutils cmake make libgcc musl-dev gcc g++ perl linux-headers && \
+    ln -s "/usr/bin/${arch}-alpine-linux-musl-gcc-ar" "/usr/bin/${arch}-alpine-linux-musl-ar" && \
+    ln -s "/usr/bin/${arch}-alpine-linux-musl-gcc-ranlib" "/usr/bin/${arch}-alpine-linux-musl-ranlib" && \
+    ln -s "/usr/bin/${arch}-alpine-linux-musl-gcc-nm" "/usr/bin/${arch}-alpine-linux-musl-nm" && \
+    ln -s /usr/bin/strip "/usr/bin/${arch}-alpine-linux-musl-strip" && \
+    ln -s /usr/bin/objcopy "/usr/bin/${arch}-alpine-linux-musl-objcopy"
+  export CROSS_COMPILE="/usr/bin/${arch}-alpine-linux-musl-"
+
   apk add curl git autoconf bison re2c pkgconf zlib-dev zstd-dev openssl-libs-static openssl-dev
 }
 
