@@ -7,6 +7,7 @@ on:
 
 env:
   APP_NAME: 'manticore-executor'
+  DOCKER_TAG: 'manticoresearch/manticore-executor'
   PHP_VERSION: '8.1.13'
   MAINTAINER: 'Manticore'
   DESC: 'Custom built PHP executor for Manticore.'
@@ -29,78 +30,54 @@ jobs:
           - os: macos-12
             script_name: ./build-osx
     steps:
-      - uses: actions/checkout@v3
-      - uses: ilammy/msvc-dev-cmd@v1.11.0
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - id: vars
+        run: |
+          echo "::set-output name=app_version::$(echo ${{ github.ref }} | cut -d_ -f1)"
+      - name: Build docker image
+        uses: docker/build-push-action@v3
         with:
-          uwp: true
-      - name: Build binary
-        run: ${{ matrix.script_name }} ${{ env.PHP_VERSION }}
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: false
+          tags: ${{ env.DOCKER_TAG }}:${{ steps.vars.outputs.app_version }}
+          build-args: BUILD_DEV=0
       - name: Create artifact
         run: |
           os="${{ runner.os }}"
-          assets="${{ env.APP_NAME }}_${{ github.ref_name }}-$( date +%y%m%d )-${GITHUB_SHA:0:7}_$(echo "${{ runner.os }}" | tr '[:upper:]' '[:lower:]')_amd64"
-          echo "$assets"
-          mkdir -p "dist/$assets"
-          if [[ "${{ runner.os }}" == Windows ]]; then
-            mv build/dist/php.exe build/dist/${{ env.APP_NAME }}.exe
-            cp build/dist/* "dist/$assets/"
-          else
-            cp build/dist/bin/php "dist/$assets/${{ env.APP_NAME }}"
-          fi
-          cp README.* "dist/$assets/"
-          (
-            cd dist
-            if [[ "${{ runner.os }}" == Windows ]]; then
-              7z a "$assets.zip" "$assets"
-            else
+
+          for arch in amd64 arm64; do
+            assets="${{ env.APP_NAME }}_${{ github.ref_name }}-$( date +%y%m%d )-${GITHUB_SHA:0:7}_$(echo "${{ runner.os }}" | tr '[:upper:]' '[:lower:]')_${arch}"
+            echo "$assets"
+            mkdir -p "$assets"
+
+            sha256=$(docker buildx imagetools inspect ${{ env.DOCKER_TAG }}:${{ steps.vars.outputs.app_version }} | grep -B2 "Platform:  linux/${arch}" | head -n1 | cut -d@ -f2)
+            id=$(docker create ${{ env.DOCKER_TAG }}:${{ steps.vars.outputs.app_version }}@${sha256})
+            docker cp $id:/usr/bin/${{ env.APP_NAME }} - > "$assets/${{ env.APP_NAME }}"
+            docker rm -v $id
+
+            cp README.* "dist/$assets/"
+            (
               tar czf "$assets.tar.gz" "$assets"
-            fi
-            ls -lah *.*
-          )
+              ls -lah *.*
+            )
+          done
         shell: bash
       - uses: actions/upload-artifact@v3
         with:
           name: artifact-${{ matrix.os }}-amd64
           path: |
-            dist/*.tar.gz
-            dist/*.zip
-
-  build-artifact-arm64:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
-      - uses: manticoresoftware/actions-run-on-arch-action@master
-        name: Build binary
-        with:
-          id: arm64
-          arch: aarch64
-          distro: ubuntu22.04
-          # Not required, but speeds up builds by storing container images in
-          # a GitHub package registry.
-          githubToken: ${{ github.token }}
-          install: |
-            apt-get update -q -y
-            apt-get install -y git sudo
-          run: ./build-linux ${{ env.PHP_VERSION }}
-      - name: Create artifact
-        run: |
-          os="${{ runner.os }}"
-          assets="${{ env.APP_NAME }}_${{ github.ref_name }}-$( date +%y%m%d )-${GITHUB_SHA:0:7}_$(echo "${{ runner.os }}" | tr '[:upper:]' '[:lower:]')_arm64"
-          echo "$assets"
-          mkdir -p "dist/$assets"
-          cp build/dist/bin/php "dist/$assets/${{ env.APP_NAME }}"
-          cp README.* "dist/$assets/"
-          (
-            cd dist
-            tar czf "$assets.tar.gz" "$assets"
-            ls -lah *.*
-          )
-        shell: bash
+            dist/*amd64.tar.gz
       - uses: actions/upload-artifact@v3
         with:
-          name: artifact-ubuntu-22.04-arm64
+          name: artifact-${{ matrix.os }}-arm64
           path: |
-            dist/*.tar.gz
+            dist/*arm64.tar.gz
 
   build-linux-packages:
     runs-on: ubuntu-22.04
@@ -373,7 +350,6 @@ jobs:
     runs-on: ubuntu-22.04
     needs:
       - build-artifact
-      - build-artifact-arm64
       - build-linux-packages
       - build-linux-packages-arm64
       - build-extra-packages

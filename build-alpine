@@ -19,7 +19,7 @@ install_deps() {
     ln -s /usr/bin/objcopy "/usr/bin/${arch}-alpine-linux-musl-objcopy"
   export CROSS_COMPILE="/usr/bin/${arch}-alpine-linux-musl-"
 
-  apk add curl git autoconf bison re2c pkgconf zlib-dev zstd-dev openssl-libs-static openssl-dev
+  apk add curl git autoconf bison re2c pkgconf zlib-dev zstd-dev openssl-libs-static openssl-dev zlib-static zlib-dev
 }
 
 install_dev_deps() {
@@ -45,12 +45,11 @@ install_dev_deps() {
 export -f install_deps install_dev_deps
 . build-bash-base.sh "$@"
 
-CONFIGURE_LDFLAGS=-static
 MAKE_LDFLAGS=-ldl
 ENABLE_SHARED=no
 ENABLE_STATIC=yes
 
-./configure LDFLAGS=$CONFIGURE_LDFLAGS CFLAGS="-O3" --prefix="$BUILD_PREFIX" --disable-all \
+./configure CFLAGS="-O3" --prefix="$BUILD_PREFIX" --disable-all \
   --enable-shared=$ENABLE_SHARED --enable-static=$ENABLE_STATIC --with-layout=GNU \
   --with-pear=no --disable-cgi --disable-phpdbg \
   --with-pcre-jit --enable-zstd --with-libzstd  \
