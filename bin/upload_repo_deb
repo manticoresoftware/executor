@@ -7,7 +7,7 @@
 # you can find it at https://www.php.net/license/3_01.txt
 
 
-# from outside: $DISTRO = stretch,buster,xenial,bionic,focal,jammy,bullseye
+# from outside: $DISTRO = stretch,buster,xenial,bionic,focal,jammy,bullseye,bookworm
 # That file here is for reference; actually used the one stored on the host to avoid checkout of the whole code
 set -e
 echo "Uploading $DISTRO"
