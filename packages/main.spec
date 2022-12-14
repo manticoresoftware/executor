@@ -3,7 +3,7 @@ Name: {{ NAME }}
 Version: {{ VERSION }}
 Release: 1%{?dist}
 Group: Applications
-License: PHP 3.01
+License: PHP-3.01
 Packager: {{ MAINTAINER }}
 Vendor: {{ MAINTAINER }}
 
