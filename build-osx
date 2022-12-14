@@ -63,13 +63,18 @@ if [[ "$BUILD_STATIC" == 1 ]]; then
   ENABLE_STATIC=yes
 fi
 
-if which brew; then
-  bison=$(brew info bison | grep files | cut -d' ' -f1)
-else
-  bison=$(test -d /usr/local/opt && echo "$_" || which /usr)
+# Bison version hack
+bison_ver=$(bison --version | head -n1 | cut -d' ' -f4)
+if [[ "$bison_ver" =~ ^2\.[0-9]+$ ]]; then
+  if which brew; then
+    bison=$(brew info bison | grep files | cut -d' ' -f1)
+  else
+    bison=$(test -d /usr/local/opt && echo "$_" || which /usr)
+  fi
+  export YACC="$bison/bin/bison"
 fi
 
-./configure YACC="$bison/bin/bison" \
+./configure \
   CFLAGS="-O3" --prefix="$BUILD_PREFIX" --disable-all \
   --enable-shared=$ENABLE_SHARED --enable-static=$ENABLE_STATIC --with-layout=GNU \
   --with-pear=no --disable-cgi --disable-phpdbg \
