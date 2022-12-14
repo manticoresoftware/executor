@@ -62,8 +62,14 @@ if [[ "$BUILD_STATIC" == 1 ]]; then
   ENABLE_SHARED=no
   ENABLE_STATIC=yes
 fi
-bison=$(test -e /usr/local/opt/bison && echo "$_" || which bison)
-./configure YACC="$bison" \
+
+if which brew; then
+  bison=$(brew info bison | grep files | cut -d' ' -f1)
+else
+  bison=$(test -d /usr/local/opt && echo "$_" || which /usr)
+fi
+
+./configure YACC="$bison/bin/bison" \
   CFLAGS="-O3" --prefix="$BUILD_PREFIX" --disable-all \
   --enable-shared=$ENABLE_SHARED --enable-static=$ENABLE_STATIC --with-layout=GNU \
   --with-pear=no --disable-cgi --disable-phpdbg \
