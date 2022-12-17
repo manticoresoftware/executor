@@ -6,6 +6,8 @@
 # received a copy of the license along with this program; if you did not,
 # you can find it at https://www.php.net/license/3_01.txt
 
+# ! This script is deprecated and we use muslc build on alpine.
+# See: build-alpine
 set -e
 install_deps() {
   sudo apt-get update -y
@@ -39,7 +41,6 @@ fi
   --enable-sockets \
   --enable-zts --enable-parallel \
   --with-openssl --with-zlib \
-  --enable-opcache \
   "${BUILD_EXTRA[@]}"
 
 if [[ "$BUILD_STATIC" == 1 ]]; then

@@ -3,7 +3,7 @@ Name: {{ NAME }}
 Version: {{ VERSION }}
 Release: 1%{?dist}
 Group: Applications
-License: PHP 3.01
+License: Apache-2.0
 Packager: {{ MAINTAINER }}
 Vendor: {{ MAINTAINER }}
 Requires: {{ EXECUTOR_NAME }} >= {{ EXECUTOR_VERSION }}
@@ -17,12 +17,16 @@ BuildArch: noarch
 {{ DESC }}
 
 %prep
+rm -rf %{buildroot}
+
+%setup -n %{name}
 
 %build
 
 %install
 
 %clean
+rm -rf %{buildroot}
 
 %post
 
@@ -30,5 +34,6 @@ BuildArch: noarch
 
 %files
 %defattr(-, root, root)
+%license usr/share/{{ NAME }}-LICENSE
 
 %changelog

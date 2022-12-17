@@ -1,13 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (c) 2022, Manticore Software LTD (https://manticoresearch.com)
-
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the The PHP License, version 3.01. You should have
-# received a copy of the license along with this program; if you did not, 
-# you can find it at https://www.php.net/license/3_01.txt
-
-
-# from outside: $DISTRO = stretch,buster,xenial,bionic,focal,jammy,bullseye
+# from outside: $DISTRO = stretch,buster,xenial,bionic,focal,jammy,bullseye,bookworm
 # That file here is for reference; actually used the one stored on the host to avoid checkout of the whole code
 set -e
 echo "Uploading $DISTRO"
@@ -26,6 +18,7 @@ copy_to() {
 for f in build/*deb; do
   # VER="$(echo "$f" | cut -d_ -f2)"
   ARCH=$(echo "$f" | cut -d_ -f3 | cut -d. -f1)
+  echo "Arch: $ARCH"
   if [ -f "$f" ]; then
     if [ -z "${IS_RELEASE_DIGIT}" ]; then
       IS_RELEASE_DIGIT=$(echo "$f" | cut -d. -f3 | cut -d- -f1)
@@ -45,6 +38,11 @@ for f in build/*deb; do
       copy_to "$f" "$DISTRO/main/binary-arm64/"
       # bundlearm=1
     fi
+
+    if [[ $ARCH == "all" ]]; then
+      copy_to "$f" "$DISTRO/main/binary-amd64/"
+      copy_to "$f" "$DISTRO/main/binary-arm64/"
+    fi
   fi
 done
 
@@ -52,10 +50,10 @@ done
 
 if [ -n "$SUFFIX" ]; then
   /usr/bin/docker exec repo-generator /generator.sh -distro "$DISTRO" -architecture amd -dev 1
-  /usr/bin/docker exec repo-generator /generator.sh -distro "$DISTRO" -architecture arm -dev 1
+  # /usr/bin/docker exec repo-generator /generator.sh -distro "$DISTRO" -architecture arm -dev 1
 else
   /usr/bin/docker exec repo-generator /generator.sh -distro "$DISTRO" -architecture amd
-  /usr/bin/docker exec repo-generator /generator.sh -distro "$DISTRO" -architecture arm
+  # /usr/bin/docker exec repo-generator /generator.sh -distro "$DISTRO" -architecture arm
 fi
 
 rm -rf build/*deb

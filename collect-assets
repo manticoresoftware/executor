@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Copyright (c) 2022, Manticore Software LTD (https://manticoreseAPP_ARCH.com)
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the The PHP License, version 3.01. You should have
+# received a copy of the license along with this program; if you did not,
+# you can find it at https://www.php.net/license/3_01.txt
+# ! Must be defined: APP_ARCH, APP_NAME, APP_VERSION, GITHUB_SHA, RUNNER_OS
+# This script is part of tools to use in GitHub workflow
+
+assets="${APP_NAME}_${APP_VERSION}-$( date +%y%m%d )-${GITHUB_SHA:0:7}_$(echo "${RUNNER_OS}" | tr '[:upper:]' '[:lower:]')_${APP_ARCH}"
+
+pwd
+echo "$assets"
+mkdir -p "$assets"
+
+# If we have dist dir that means we built it on host machine
+if test -d dist; then
+  cp dist/bin/php "$assets/${APP_NAME}"
+else
+  id=$(docker create "${DOCKER_IMAGE}")
+  docker cp "$id:/usr/bin/${APP_NAME}" "$assets/${APP_NAME}"
+  chmod +x "$assets/${APP_NAME}"
+  docker rm -v "$id"
+fi
+
+# Add common files
+cp {README.md,LICENSE} "$assets/"
+
+# Finaly make assets arhive
+(
+  tar czf "$assets.tar.gz" "$assets"
+  ls -lah *.*
+)
