@@ -1,9 +1,11 @@
+%define debug_package %{nil}
+
 Summary: {{ DESC }}
 Name: {{ NAME }}
 Version: {{ VERSION }}
 Release: 1%{?dist}
 Group: Applications
-License: PHP 3.01
+License: PHP-3.01
 Packager: {{ MAINTAINER }}
 Vendor: {{ MAINTAINER }}
 
@@ -15,25 +17,25 @@ BuildArch: {{ ARCH }}
 {{ DESC }}
 
 %prep
-rm -rf $RPM_BUILD_ROOT
+rm -rf %{buildroot}
 
 %setup -n %{name}
 
 %build
 
 %install
-mkdir -p $RPM_BUILD_ROOT
-cp -p usr/bin/manticore-executor $RPM_BUILD_ROOT/
+mkdir -p %{buildroot}/usr/bin
+cp -p usr/bin/manticore-executor %{buildroot}/usr/bin/
 
 %clean
-rm -rf $RPM_BUILD_ROOT
+rm -rf %{buildroot}
 
 %post
 
 %postun
 
 %files
-%defattr(-, root, root)
-/manticore-executor
-
-%changelog
+%doc usr/share/{{ NAME }}-README.md
+%license usr/share/{{ NAME }}-LICENSE
+%defattr(1755, root, root)
+/usr/bin/manticore-executor
