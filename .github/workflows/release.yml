@@ -93,6 +93,11 @@ jobs:
         run: |
           # name is like assets manticore-executor_v0.5.1-221214-e089052_linux_amd64:
           tar -xzf *.tar.gz
+
+          # Setup openssl workaround
+          mkdir -p .debpkg/DEBIAN
+          cp -p packages/postrun .debpkg/DEBIAN/postinst
+
           mkdir -p .debpkg/usr/bin
           mkdir -p .rpmpkg/usr/bin
           mkdir -p .rpmpkg/usr/share/
@@ -135,6 +140,7 @@ jobs:
           sed -i 's/{{ MAINTAINER }}/${{ env.MAINTAINER }}/g' $spec_file
           sed -i 's/{{ DESC }}/${{ env.DESC }}/g' $spec_file
           sed -i 's/{{ ARCH }}/x86_64/g' $spec_file
+          # sed -i "s@{{ POSTRUN }}@$(<packages/postrun)@g" $spec_file
 
           tar czf tmp.tar.gz "${{ env.APP_NAME }}/"
           mkdir -p "$RPMBUILD_SOURCE_DIR"
@@ -187,6 +193,11 @@ jobs:
         run: |
           # name is like assets manticore-executor_v0.5.1-221214-e089052_linux_arm64:
           tar -xzf *.tar.gz
+
+          # Setup openssl workaround
+          mkdir -p .debpkg/DEBIAN
+          cp -p packages/postrun .debpkg/DEBIAN/postinst
+
           mkdir -p .debpkg/usr/bin
           mkdir -p .rpmpkg/usr/bin
           mkdir -p .rpmpkg/usr/share
@@ -221,7 +232,7 @@ jobs:
           distro: centos7
           githubToken: ${{ github.token }}
           setup: |
-            mkdir -p "${PWD}/artifacts"
+            mkdir -p "${PWD}/artifacts/packages"
             cp -rp .rpmpkg "${PWD}/artifacts/.rpmpkg"
           dockerRunArgs: |
             --volume "${PWD}/artifacts:/artifacts"
@@ -245,6 +256,8 @@ jobs:
             sed -i 's/{{ MAINTAINER }}/${{ env.MAINTAINER }}/g' $spec_file
             sed -i 's/{{ DESC }}/${{ env.DESC }}/g' $spec_file
             sed -i 's/{{ ARCH }}/aarch64/g' $spec_file
+            # sed -i "s@{{ POSTRUN }}@$(<packages/postrun)@g" $spec_file
+
 
             tar czf tmp.tar.gz "${{ env.APP_NAME }}/"
             mkdir -p "$RPMBUILD_SOURCE_DIR"
@@ -294,7 +307,7 @@ jobs:
           arch: 'all'
           desc: '${{ env.EXTRA_DESC }}'
           license: 'Apache-2.0'
-          depends: '${{ env.APP_NAME }} (>= ${{ steps.vars.outputs.app_version }}), ${{ env.COLUMNAR_NAME }} (>= ${{ env. COLUMNAR_VERSION }})'
+          depends: '${{ env.APP_NAME }} (>= ${{ steps.vars.outputs.app_version }}), ${{ env.COLUMNAR_NAME }} (>= ${{ env. COLUMNAR_VERSION }}), ca-certificates'
       - name: Build RPM packages
         run: |
           sudo apt-get update -y -q

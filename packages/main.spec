@@ -32,7 +32,22 @@ rm -rf %{buildroot}
 
 %post
 
-%postun
+%postrun
+if [ -f /etc/ssl/cert.pem ]; then
+  exit 0
+fi
+
+for cert in "/etc/ssl/certs/ca-certificates.crt" \
+  "/etc/pki/tls/certs/ca-bundle.crt" \
+  "/etc/ssl/ca-bundle.pem" \
+  "/etc/pki/tls/cacert.pem" \
+  "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem"; do
+  if [ -f "$cert" ]; then
+    ln -s "$cert" /etc/ssl/cert.pem
+    break
+  fi
+done
+
 
 %files
 %doc usr/share/{{ NAME }}-README.md

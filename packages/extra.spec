@@ -8,6 +8,7 @@ Packager: {{ MAINTAINER }}
 Vendor: {{ MAINTAINER }}
 Requires: {{ EXECUTOR_NAME }} >= {{ EXECUTOR_VERSION }}
 Requires: {{ COLUMNAR_NAME }} >= {{ COLUMNAR_VERSION }}
+Requires: ca-certificates
 
 Source: tmp.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-buildroot
