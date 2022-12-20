@@ -59,6 +59,7 @@ ENABLE_STATIC=yes
   --with-openssl --with-zlib \
   "${BUILD_EXTRA[@]}"
 
+sed -ie 's/PHP_INI_ENTRY("openssl.cafile", NULL, PHP_INI_PERDIR, NULL)/PHP_INI_ENTRY("openssl.cafile", "\/etc\/ssl\/cert.pem", PHP_INI_PERDIR, NULL)/g' ext/openssl/openssl.c
 sed -ie 's/-export-dynamic//g' Makefile
 sed -ie 's/-o $(SAPI_CLI_PATH)/-all-static -o $(SAPI_CLI_PATH)/g' Makefile
 
