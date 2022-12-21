@@ -15,8 +15,8 @@ echo "$assets"
 mkdir -p "$assets"
 
 # If we have dist dir that means we built it on host machine
-if test -d dist; then
-  cp dist/bin/php "$assets/${APP_NAME}"
+if test -d build/dist; then
+  cp build/dist/bin/php "$assets/${APP_NAME}"
 else
   id=$(docker create "${DOCKER_IMAGE}")
   docker cp "$id:/usr/bin/${APP_NAME}" "$assets/${APP_NAME}"
