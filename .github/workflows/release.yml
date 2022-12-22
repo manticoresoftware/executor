@@ -549,27 +549,11 @@ jobs:
           - artifact: artifact-deb-amd64
             ext: deb
             script: bin/upload_repo_deb
-            distro: stretch
-          - artifact: artifact-deb-arm64
-            ext: deb
-            script: bin/upload_repo_deb
-            distro: stretch
-          - artifact: artifact-deb-amd64
-            ext: deb
-            script: bin/upload_repo_deb
             distro: buster
           - artifact: artifact-deb-arm64
             ext: deb
             script: bin/upload_repo_deb
             distro: buster
-          - artifact: artifact-deb-amd64
-            ext: deb
-            script: bin/upload_repo_deb
-            distro: xenial
-          - artifact: artifact-deb-arm64
-            ext: deb
-            script: bin/upload_repo_deb
-            distro: xenial
           - artifact: artifact-deb-amd64
             ext: deb
             script: bin/upload_repo_deb
@@ -642,15 +626,7 @@ jobs:
           - artifact: artifact-extra-deb
             ext: deb
             script: bin/upload_repo_deb
-            distro: stretch
-          - artifact: artifact-extra-deb
-            ext: deb
-            script: bin/upload_repo_deb
             distro: buster
-          - artifact: artifact-extra-deb
-            ext: deb
-            script: bin/upload_repo_deb
-            distro: xenial
           - artifact: artifact-extra-deb
             ext: deb
             script: bin/upload_repo_deb
