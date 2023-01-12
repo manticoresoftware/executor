@@ -21,16 +21,22 @@ jobs:
           - macos-12
         include:
           - os: ubuntu-22.04
-            script_name: ./build-linux
+            use_docker: true
+            script_name: ./build-alpine
           - os: macos-12
+            use_docker: false
             script_name: ./build-osx
     steps:
       - uses: actions/checkout@v3
       - uses: ilammy/msvc-dev-cmd@v1.11.0
         with:
           uwp: true
-      - name: Build binary
+      - name: Build binary using host OS
+        if: ${{ matrix.use_docker == false }}
         run: ${{ matrix.script_name }} ${{ env.PHP_VERSION }}
+      - name: Build binary using Docker
+        if: ${{ matrix.use_docker == true }}
+        run: docker run -v ${PWD}:/src -w /src alpine:3.17 sh -c "apk add sudo bash; ${{ matrix.script_name }} ${{ env.PHP_VERSION }}"
       - name: Create artifact
         run: |
           os="${{ runner.os }}"
