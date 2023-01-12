@@ -41,6 +41,7 @@ fi
   --enable-sockets \
   --enable-zts --enable-parallel \
   --with-openssl --with-zlib \
+  --enable-mbstring \
   "${BUILD_EXTRA[@]}"
 
 if [[ "$BUILD_STATIC" == 1 ]]; then

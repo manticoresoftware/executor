@@ -37,6 +37,7 @@ We build executor from `PHP 8.2.1` with the following extensions enabled and com
 * parallel
 * openssl
 * zlib
+* mbstring
 
 ## Build from source
 
