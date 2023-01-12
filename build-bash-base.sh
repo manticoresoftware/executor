@@ -55,7 +55,6 @@ if [[ "$BUILD_DEV" == "1" ]]; then
   BUILD_EXTRA=(
     "--enable-dom"
     "--with-libxml"
-    "--enable-mbstring"
     "--enable-tokenizer"
     "--enable-xml"
     "--enable-xmlwriter"
