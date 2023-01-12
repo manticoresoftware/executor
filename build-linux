@@ -11,11 +11,11 @@
 set -e
 install_deps() {
   sudo apt-get update -y
-  sudo apt-get install -y curl build-essential autoconf automake bison re2c libzstd-dev pkg-config git libssl-dev zlib1g-dev cmake
+  sudo apt-get install -y curl build-essential autoconf automake bison re2c libzstd-dev pkg-config git libssl-dev zlib1g-dev libonig-dev cmake
 }
 
 install_dev_deps() {
-  sudo apt-get install -y libxml2-dev libonig-dev libgmp-dev libzip-dev
+  sudo apt-get install -y libonig-dev libgmp-dev libzip-dev
 }
 
 export -f install_deps install_dev_deps
