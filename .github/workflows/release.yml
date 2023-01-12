@@ -368,6 +368,58 @@ jobs:
             ./*.rpm
             !./*-debuginfo-*.rpm
 
+  test-linux-packages:
+    needs: build-linux-packages
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            image: debian:stretch
+            pkg: deb
+          - os: ubuntu-22.04
+            image: debian:buster
+            pkg: deb
+          - os: ubuntu-22.04
+            image: debian:bullseye
+            pkg: deb
+          - os: ubuntu-22.04
+            image: debiaa:bookworm
+            pkg: deb
+          - os: ubuntu-22.04
+            image: ubuntu:xenial
+            pkg: deb
+          - os: ubuntu-22.04
+            image: ubuntu:bionic
+            pkg: deb
+          - os: ubuntu-22.04
+            image: ubuntu:focal
+            pkg: deb
+          - os: ubuntu-22.04
+            image: ubuntu:jammy
+            pkg: deb
+          - os: ubuntu-22.04
+            image: centos:7
+            pkg: rpm
+          - os: ubuntu-22.04
+            image: rockylinux:8
+            pkg: rpm
+          - os: ubuntu-22.04
+            image: rockylinux:9
+            pkg: rpm
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact-${{ matrix.os }}-amd64
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact-${{ matrix.os }}-arm64
+      - name: Testing the package
+        run: |
+          file=$(ls *.${{ matrix.pkg }} | head -n 1)
+          bin/test_package "${{ matrix.image }}" "$file"
+
   create-release:
     runs-on: ubuntu-22.04
     needs:
