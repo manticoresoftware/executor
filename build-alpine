@@ -24,7 +24,7 @@ install_deps() {
 }
 
 install_dev_deps() {
-  apk add gmp-dev
+  apk add gmp-dev judy-dev bsd-compat-headers m4
 
   test -d libzip-1.9.2 && rm -f $_
   curl -sSL https://github.com/nih-at/libzip/releases/download/v1.9.2/libzip-1.9.2.tar.gz | tar -xzf -
@@ -45,6 +45,28 @@ install_dev_deps() {
 
 export -f install_deps install_dev_deps
 . build-bash-base.sh "$@"
+
+if [ "$BUILD_DEV" -eq 1 ]; then
+  cd ext
+
+  git clone https://github.com/donhardman/php-memory-profiler.git memprof && cd "$_"
+  git checkout 68eb143bd5700a6fe041826118aeb9a13a3fcef3
+  cd ..
+
+  git clone https://github.com/tideways/php-xhprof-extension.git tideways_xhprof && cd "$_"
+  git checkout 6ee298f910a3661960f454bd6a787686657c7570
+  cd ..
+
+  # Still not working due to zend 
+  # git clone https://github.com/donhardman/xdebug.git xdebug && cd "$_"
+  # git checkout xdebug_3_2
+  # cd ..
+
+  cd ..
+
+  # We need to rebuild because we modify extensions in PHP core code
+  ./buildconf --force
+fi
 
 MAKE_LDFLAGS=-ldl
 ENABLE_SHARED=no

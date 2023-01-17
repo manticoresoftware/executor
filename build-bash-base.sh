@@ -66,6 +66,11 @@ if [[ "$BUILD_DEV" == "1" ]]; then
     # Little extra exts in case we will need it
     "--enable-bcmath"
     "--with-gmp"
+    # Profiling extensions
+    "--enable-memprof"
+    "--enable-memprof-debug"
+    "--enable-tideways-xhprof"
+    # "--enable-xdebug"
   )
 fi
 
