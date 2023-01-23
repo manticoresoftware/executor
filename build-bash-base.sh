@@ -68,8 +68,8 @@ if [[ "$BUILD_DEV" == "1" ]]; then
     "--with-gmp"
     # Profiling extensions
     "--enable-debug"
-    "--enable-memprof"
-    "--enable-memprof-debug"
+    # "--enable-memprof"
+    # "--enable-memprof-debug"
     "--enable-tideways-xhprof"
     # "--enable-xdebug"
   )
