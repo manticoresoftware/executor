@@ -8,7 +8,7 @@ on:
 env:
   APP_NAME: 'manticore-executor'
   DOCKER_TAG: 'manticoresearch/manticore-executor'
-  PHP_VERSION: '8.2.1'
+  PHP_VERSION: '8.2.2'
   MAINTAINER: 'Manticore'
   DESC: 'Custom built PHP executor for Manticore.'
   EXTRA_NAME: 'manticore-extra'
