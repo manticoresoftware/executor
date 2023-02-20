@@ -28,7 +28,7 @@ Manticore Executor is a custom built PHP binary which:
 
 By default, we disable all extensions and enable only those required to run our scripts.
 
-We build executor from `PHP 8.2.2` with the following extensions enabled and compiled into the executable statically:
+We build executor from `PHP 8.2.3` with the following extensions enabled and compiled into the executable statically:
 
 * pcntl
 * posix
@@ -83,13 +83,13 @@ Several scripts used to build the final package:
 * `build-linux`
 * `build-osx`
 
-The scripts accept a version of PHP as a parameter. The current version is `8.2.2`. To build the binary, you should run the following example:
+The scripts accept a version of PHP as a parameter. The current version is `8.2.3`. To build the binary, you should run the following example:
 
 ```bash
-./build-linux "8.2.2"
+./build-linux "8.2.3"
 ```
 
-The command above will build the package on Linux with **PHP** `8.2.2`. Once it's done, you can find your binary in folder `dist/bin`.
+The command above will build the package on Linux with **PHP** `8.2.3`. Once it's done, you can find your binary in folder `dist/bin`.
 
 ### Build for MacOS arm64
 

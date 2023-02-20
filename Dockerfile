@@ -5,7 +5,7 @@ ARG BUILD_DEV=0
 COPY . /src
 RUN apk add bash && \
   cd /src && \
-  ./build-alpine 8.2.2 0 $BUILD_DEV && \
+  ./build-alpine 8.2.3 0 $BUILD_DEV && \
   mv build/dist/bin/php /usr/bin/manticore-executor && \
   ln -s /usr/bin/manticore-executor /usr/bin/php && \
   cd ../..
@@ -20,5 +20,5 @@ RUN test "$BUILD_DEV" -eq 1 && php -r "copy('https://getcomposer.org/installer',
 WORKDIR /src
 
 # Build on silicon chip mac:
-# docker buildx build --build-arg BUILD_DEV=0 --platform linux/amd64,linux/arm64 -t manticoresearch/manticore-executor:0.6.4 --push .
-# docker buildx build --build-arg BUILD_DEV=1 --platform linux/amd64,linux/arm64 -t manticoresearch/manticore-executor:0.6.4-dev --push .
+# docker buildx build --build-arg BUILD_DEV=0 --platform linux/amd64,linux/arm64 -t manticoresearch/manticore-executor:0.6.6 --push .
+# docker buildx build --build-arg BUILD_DEV=1 --platform linux/amd64,linux/arm64 -t manticoresearch/manticore-executor:0.6.6-dev --push .
