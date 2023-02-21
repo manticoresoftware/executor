@@ -39,9 +39,9 @@ jobs:
         uses: actions/checkout@v3
       - id: vars
         run: |
-          echo "::set-output name=app_version::$(echo ${{ github.ref_name }} | cut -dv -f2)"
-          echo "::set-output name=rpm_suffix::_$( date +%y%m%d%H ).${GITHUB_SHA:0:7}"
-          echo "::set-output name=deb_suffix::-$( date +%y%m%d%H )-${GITHUB_SHA:0:7}"
+          echo "app_version=$(echo ${{ github.ref_name }} | cut -dv -f2)" >> $GITHUB_OUTPUT
+          echo "rpm_suffix=_$( date +%y%m%d%H ).${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
+          echo "deb_suffix=-$( date +%y%m%d%H )-${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
       - name: Set up QEMU
         if: ${{ matrix.use_buildx == true }}
         uses: docker/setup-qemu-action@v2
@@ -82,9 +82,9 @@ jobs:
       - uses: actions/checkout@v3
       - id: vars
         run: |
-          echo "::set-output name=app_version::$(echo ${{ github.ref_name }} | cut -dv -f2)"
-          echo "::set-output name=rpm_suffix::_$( date +%y%m%d%H ).${GITHUB_SHA:0:7}"
-          echo "::set-output name=deb_suffix::-$( date +%y%m%d%H )-${GITHUB_SHA:0:7}"
+          echo "app_version=$(echo ${{ github.ref_name }} | cut -dv -f2)" >> $GITHUB_OUTPUT
+          echo "rpm_suffix=_$( date +%y%m%d%H ).${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
+          echo "deb_suffix=-$( date +%y%m%d%H )-${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
       - name: Download artifact
         uses: actions/download-artifact@v3
         with:
@@ -182,9 +182,9 @@ jobs:
       - uses: actions/checkout@v3
       - id: vars
         run: |
-          echo "::set-output name=app_version::$(echo ${{ github.ref_name }} | cut -dv -f2)"
-          echo "::set-output name=rpm_suffix::_$( date +%y%m%d%H ).${GITHUB_SHA:0:7}"
-          echo "::set-output name=deb_suffix::-$( date +%y%m%d%H )-${GITHUB_SHA:0:7}"
+          echo "app_version=$(echo ${{ github.ref_name }} | cut -dv -f2)" >> $GITHUB_OUTPUT
+          echo "rpm_suffix=_$( date +%y%m%d%H ).${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
+          echo "deb_suffix=-$( date +%y%m%d%H )-${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
       - name: Download artifact
         uses: actions/download-artifact@v3
         with:
@@ -288,9 +288,9 @@ jobs:
       - uses: actions/checkout@v3
       - id: vars
         run: |
-          echo "::set-output name=app_version::$(echo ${{ github.ref_name }} | cut -dv -f2)"
-          echo "::set-output name=rpm_suffix::_$( date +%y%m%d%H ).${GITHUB_SHA:0:7}"
-          echo "::set-output name=deb_suffix::-$( date +%y%m%d%H )-${GITHUB_SHA:0:7}"
+          echo "app_version=$(echo ${{ github.ref_name }} | cut -dv -f2)" >> $GITHUB_OUTPUT
+          echo "rpm_suffix=_$( date +%y%m%d%H ).${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
+          echo "deb_suffix=-$( date +%y%m%d%H )-${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
       - name: Prepare packages structure
         run: |
           mkdir -p .debpkg/usr/bin
@@ -434,8 +434,8 @@ jobs:
 
       - id: vars
         run: |
-          echo "::set-output name=upload_url::$(cat upload_url.txt)"
-          echo "::set-output name=asset_path::$(ls *${{ matrix.asset_name_suffix }} | head -n 1)"
+          echo "upload_url=$(cat upload_url.txt)" >> $GITHUB_OUTPUT
+          echo "asset_path=$(ls *${{ matrix.asset_name_suffix }} | head -n 1)" >> $GITHUB_OUTPUT
 
       - name: Upload Release Asset
         id: upload-release-asset
@@ -477,8 +477,8 @@ jobs:
 
       - id: vars
         run: |
-          echo "::set-output name=upload_url::$(cat upload_url.txt)"
-          echo "::set-output name=asset_name::$(ls *.${{ matrix.pkg }} | head -n 1)"
+          echo "upload_url=$(cat upload_url.txt)" >> $GITHUB_OUTPUT
+          echo "asset_name=$(ls *.${{ matrix.pkg }} | head -n 1)" >> $GITHUB_OUTPUT
 
       - name: Upload Release Asset
         id: upload-release-asset
@@ -522,8 +522,8 @@ jobs:
         shell: bash
       - id: vars
         run: |
-          echo "::set-output name=upload_url::$(cat upload_url.txt)"
-          echo "::set-output name=asset_name::$(ls *.${{ matrix.pkg }} | head -n 1)"
+          echo "upload_url=$(cat upload_url.txt)" >> $GITHUB_OUTPUT
+          echo "asset_name=$(ls *.${{ matrix.pkg }} | head -n 1)" >> $GITHUB_OUTPUT
 
       - name: Upload Release Asset
         id: upload-release-asset
@@ -724,7 +724,7 @@ jobs:
 
       - id: vars
         run: |
-          echo "::set-output name=asset_name::$(ls ./build/*.${{ matrix.ext }} | head -n 1)"
+          echo "asset_name=$(ls ./build/*.${{ matrix.ext }} | head -n 1)" >> $GITHUB_OUTPUT
 
       - name: Deploy package
         run: |
