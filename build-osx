@@ -83,6 +83,7 @@ fi
   --enable-sockets \
   --enable-zts --enable-parallel \
   --with-openssl --with-zlib \
+  --enable-filter \
   --enable-opcache \
   "${BUILD_EXTRA[@]}"
 make LDFLAGS=$MAKE_LDFLAGS -j8

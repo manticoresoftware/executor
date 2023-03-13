@@ -80,6 +80,7 @@ ENABLE_STATIC=yes
   --enable-sockets \
   --enable-zts --enable-parallel \
   --with-openssl --with-zlib \
+  --enable-filter \
   --enable-mbstring \
   "${BUILD_EXTRA[@]}"
 
