@@ -61,7 +61,6 @@ if [[ "$BUILD_DEV" == "1" ]]; then
     "--enable-xmlreader"
     "--enable-simplexml"
     "--enable-phar"
-    "--enable-filter"
     "--with-zip"
     # Little extra exts in case we will need it
     "--enable-bcmath"
