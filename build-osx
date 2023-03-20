@@ -9,7 +9,7 @@
 set -e
 install_deps() {
   brew upgrade
-  brew install curl autoconf automake bison re2c zstd git openssl zlib cmake
+  brew install curl autoconf automake bison re2c zstd git openssl zlib cmake libcurl
 }
 
 install_dev_deps() {
@@ -84,6 +84,7 @@ fi
   --enable-zts --enable-parallel \
   --with-openssl --with-zlib \
   --enable-filter \
+  --with-curl \
   --enable-opcache \
   "${BUILD_EXTRA[@]}"
 make LDFLAGS=$MAKE_LDFLAGS -j8

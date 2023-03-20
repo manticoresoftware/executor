@@ -81,6 +81,7 @@ ENABLE_STATIC=yes
   --enable-zts --enable-parallel \
   --with-openssl --with-zlib \
   --enable-filter \
+  --with-curl \
   --enable-mbstring \
   "${BUILD_EXTRA[@]}"
 
