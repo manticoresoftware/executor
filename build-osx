@@ -9,7 +9,16 @@
 set -e
 install_deps() {
   brew upgrade
-  brew install curl autoconf automake bison re2c zstd git openssl zlib cmake libcurl
+  brew install curl autoconf automake bison re2c zstd git openssl zlib cmake
+
+  OPENSSL_PREFIX="$(brew --prefix openssl)"
+  OPENSSL_CFLAGS="-I${OPENSSL_PREFIX}/include"
+  OPENSSL_LIBS="-L${OPENSSL_PREFIX}/lib -lcrypto -lssl"
+  export OPENSSL_PREFIX OPENSSL_CFLAGS OPENSSL_LIBS
+  export PATH="${OPENSSL_PREFIX}/bin:${PATH}"
+  export LDFLAGS="-L${OPENSSL_PREFIX}@1.1/lib"
+  export CPPFLAGS="-I${OPENSSL_PREFIX}/include"
+  export PKG_CONFIG_PATH="${OPENSSL_PREFIX}/lib/pkgconfig"
 }
 
 install_dev_deps() {
@@ -18,14 +27,6 @@ install_dev_deps() {
 
 export -f install_deps install_dev_deps
 . ./build-bash-base.sh "$@"
-
-if which brew; then
-  brew link openssl@1.1
-  OPENSSL_PREFIX="$(brew --prefix openssl@1.1)"
-  OPENSSL_CFLAGS="-I${OPENSSL_PREFIX}/include"
-  OPENSSL_LIBS="-L${OPENSSL_PREFIX}/lib -lcrypto -lssl"
-  export OPENSSL_PREFIX OPENSSL_CFLAGS OPENSSL_LIBS
-fi
 
 hide_dynamic_libs() {
   ! which brew && return

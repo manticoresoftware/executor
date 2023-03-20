@@ -21,6 +21,14 @@ install_deps() {
   export CROSS_COMPILE="/usr/bin/${arch}-alpine-linux-musl-"
 
   apk add curl git autoconf bison re2c pkgconf zlib-dev zstd-dev openssl-libs-static openssl-dev zlib-static zlib-dev
+
+  # Build curl
+  curl -sSL https://github.com/curl/curl/releases/download/curl-8_0_0/curl-8.0.0.tar.gz | tar -xzf -
+  cd curl-8.0.0
+  ./configure --disable-shared --with-ssl --without-libidn2
+  make -j8
+  make install
+  cd ..
 }
 
 install_dev_deps() {

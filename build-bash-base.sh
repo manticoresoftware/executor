@@ -32,14 +32,6 @@ curl -sSL "https://github.com/php/php-src/archive/refs/tags/php-$PHP_VERSION.tar
 test -d build && rm -fr "$_"
 mv "php-src-php-$PHP_VERSION" build && cd "$_"
 
-# Build curl
-curl -sSL https://github.com/curl/curl/releases/download/curl-8_0_0/curl-8.0.0.tar.gz | tar -xzf -
-cd curl-8.0.0
-./configure --disable-shared --with-ssl --without-libidn2
-make -j8
-make install
-cd ..
-
 # Build extra extensions
 cd ext
 
