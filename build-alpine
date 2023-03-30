@@ -23,16 +23,13 @@ install_deps() {
   apk add curl git autoconf bison re2c pkgconf zlib-dev zstd-dev openssl-libs-static openssl-dev zlib-static zlib-dev
 
   # Build curl
+  test -d curl-8.0.0 && rm -f $_
   curl -sSL https://github.com/curl/curl/releases/download/curl-8_0_0/curl-8.0.0.tar.gz | tar -xzf -
   cd curl-8.0.0
   ./configure --disable-shared --with-ssl --without-libidn2
   make -j8
   make install
   cd ..
-}
-
-install_dev_deps() {
-  apk add gmp-dev judy-dev bsd-compat-headers m4
 
   test -d libzip-1.9.2 && rm -f $_
   curl -sSL https://github.com/nih-at/libzip/releases/download/v1.9.2/libzip-1.9.2.tar.gz | tar -xzf -
@@ -41,6 +38,10 @@ install_dev_deps() {
   make -j4 && make install
   cd ../..
   rm -fr libzip-1.9.2
+}
+
+install_dev_deps() {
+  apk add gmp-dev judy-dev bsd-compat-headers m4
 
   test -d libxml2-2.10.3 && rm -f libxml2-2.10.3
   curl -sSL https://github.com/GNOME/libxml2/archive/refs/tags/v2.10.3.tar.gz | tar -xzf -
@@ -87,7 +88,7 @@ ENABLE_STATIC=yes
   --enable-pcntl --enable-posix \
   --enable-sockets \
   --enable-zts --enable-parallel \
-  --with-openssl --with-zlib \
+  --with-openssl --with-zlib --with-zip \
   --enable-filter \
   --with-curl \
   --enable-mbstring \

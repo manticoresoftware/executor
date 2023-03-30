@@ -9,7 +9,7 @@
 set -e
 install_deps() {
   brew upgrade
-  brew install curl autoconf automake bison re2c zstd git openssl zlib cmake
+  brew install curl autoconf automake bison re2c zstd git openssl zlib cmake libzip
 
   OPENSSL_PREFIX="$(brew --prefix openssl)"
   OPENSSL_CFLAGS="-I${OPENSSL_PREFIX}/include"
@@ -83,7 +83,7 @@ fi
   --enable-pcntl --enable-posix \
   --enable-sockets \
   --enable-zts --enable-parallel \
-  --with-openssl --with-zlib \
+  --with-openssl --with-zlib --with-zip \
   --enable-filter \
   --with-curl \
   --enable-opcache \
