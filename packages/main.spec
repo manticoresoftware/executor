@@ -31,8 +31,6 @@ cp -p usr/bin/manticore-executor %{buildroot}/usr/bin/
 rm -rf %{buildroot}
 
 %post
-
-%postrun
 if [ -f /etc/ssl/cert.pem ]; then
   exit 0
 fi
@@ -48,6 +46,7 @@ for cert in "/etc/ssl/certs/ca-certificates.crt" \
   fi
 done
 
+%postun
 
 %files
 %doc usr/share/{{ NAME }}-README.md
