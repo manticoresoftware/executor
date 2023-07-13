@@ -6,42 +6,37 @@
 # received a copy of the license along with this program; if you did not,
 # you can find it at https://www.php.net/license/3_01.txt
 
-# ! This script is deprecated and we use muslc build on alpine.
-# See: build-alpine
-set -e
+# We use this script exclusively to build dev version, because static linking is hard
+# For static linking we keep using the alpine docker image and buildx
+
+# To make it work on fresh ubuntu jammy, run the following command:
+# apt-get install -y libxml2 libcurl4 libonig5 libzip4
+
+set -xe
+. helper.sh
+
 install_deps() {
   sudo apt-get update -y
-  sudo apt-get install -y curl build-essential autoconf automake bison re2c libzstd-dev pkg-config git libssl-dev zlib1g-dev libzip-dev libonig-dev cmake
-
-  # Build curl
-  curl -sSL https://github.com/curl/curl/releases/download/curl-8_0_0/curl-8.0.0.tar.gz | tar -xzf -
-  cd curl-8.0.0
-  ./configure --disable-shared --with-ssl --without-libidn2
-  make -j8
-  sudo make install
-  cd ..
+  sudo apt-get install -y curl build-essential autoconf automake bison re2c libzstd-dev pkg-config git libssl-dev zlib1g-dev libzip-dev libonig-dev cmake libcurl4-openssl-dev libzip-dev
 }
 
 install_dev_deps() {
-  sudo apt-get install -y libonig-dev libgmp-dev
+  sudo apt-get install -y libonig-dev libgmp-dev libxml2-dev
 }
 
 export -f install_deps install_dev_deps
 . build-bash-base.sh "$@"
 
-CONFIGURE_LDFLAGS=
-MAKE_LDFLAGS=
-ENABLE_SHARED=yes
-ENABLE_STATIC=no
-if [[ "$BUILD_STATIC" == 1 ]]; then
-  CONFIGURE_LDFLAGS=-static
-  MAKE_LDFLAGS=-ldl
-  ENABLE_SHARED=no
-  ENABLE_STATIC=yes
+
+if [ "$BUILD_DEV" -eq 1 ]; then
+  build_dev_conf
 fi
 
 
-./configure LDFLAGS=$CONFIGURE_LDFLAGS CFLAGS="-O3" --prefix="$BUILD_PREFIX" --disable-all \
+ENABLE_SHARED=yes
+ENABLE_STATIC=yes
+
+./configure CFLAGS="-O3" --prefix="$BUILD_PREFIX" --disable-all \
   --enable-shared=$ENABLE_SHARED --enable-static=$ENABLE_STATIC --with-layout=GNU \
   --with-pear=no --disable-cgi --disable-phpdbg \
   --with-pcre-jit --enable-zstd --with-libzstd  \
@@ -54,11 +49,5 @@ fi
   --enable-mbstring \
   "${BUILD_EXTRA[@]}"
 
-if [[ "$BUILD_STATIC" == 1 ]]; then
-  sed -ie 's/-export-dynamic//g' Makefile
-  sed -ie 's/-o $(SAPI_CLI_PATH)/-all-static -o $(SAPI_CLI_PATH)/g' Makefile
-fi
-
-make LDFLAGS=$MAKE_LDFLAGS -j8
+make -j8
 make install-cli
-strip --strip-all dist/bin/php
