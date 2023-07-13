@@ -8,7 +8,7 @@ on:
 env:
   APP_NAME: 'manticore-executor'
   DOCKER_TAG: 'manticoresearch/manticore-executor'
-  PHP_VERSION: '8.2.4'
+  PHP_VERSION: '8.2.8'
   MAINTAINER: 'Manticore'
   DESC: 'Custom built PHP executor for Manticore.'
   EXTRA_NAME: 'manticore-extra'
@@ -73,6 +73,32 @@ jobs:
           name: artifact-${{ matrix.os }}-${{ matrix.arch }}
           path: |
             *${{ matrix.arch }}.tar.gz
+
+  build-artifact-dev:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - id: vars
+        run: |
+          echo "app_version=$(echo ${{ github.ref_name }} | cut -dv -f2)" >> $GITHUB_OUTPUT
+      - name: Build manticore-executor-dev
+        run: ./build-linux 8.2.8 0 1
+        shell: bash
+      - name: Create artifact
+        run: |
+          APP_ARCH=amd64 \
+            APP_VERSION=${{ steps.vars.outputs.app_version }} \
+            APP_NAME=${{ env.APP_NAME }} \
+            RUNNER_OS="${{ runner.os }}" \
+            ASSET_SUFFIX=-dev \
+            ./collect-assets
+        shell: bash
+      - uses: actions/upload-artifact@v3
+        with:
+          name: artifact-dev-ubuntu-22.04-amd64
+          path: |
+            *.tar.gz
 
   build-linux-packages:
     needs:
@@ -372,6 +398,7 @@ jobs:
     runs-on: ubuntu-22.04
     needs:
       - build-artifact
+      - build-artifact-dev
       - build-linux-packages
       - build-linux-packages-arm64
       - build-extra-packages
@@ -411,22 +438,22 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-22.04
-            arch: amd64
+          - artifact_suffix: ubuntu-22.04-amd64
             asset_name_suffix: linux_amd64.tar.gz
             asset_content_type: application/gzip
-          - os: ubuntu-22.04
-            arch: arm64
+          - artifact_suffix: ubuntu-22.04-arm64
             asset_name_suffix: linux_arm64.tar.gz
             asset_content_type: application/gzip
-          - os: macos-12
-            arch: amd64
+          - artifact_suffix: macos-12-amd64
             asset_name_suffix: macos_amd64.tar.gz
+            asset_content_type: application/gzip
+          - artifact_suffix: dev-ubuntu-22.04-amd64
+            asset_name_suffix: linux_amd64-dev.tar.gz
             asset_content_type: application/gzip
     steps:
       - uses: actions/download-artifact@v3
         with:
-          name: artifact-${{ matrix.os }}-${{ matrix.arch }}
+          name: artifact-${{ matrix.artifact_suffix }}
 
       - uses: actions/download-artifact@v3
         with:
