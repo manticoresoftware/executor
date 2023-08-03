@@ -87,6 +87,7 @@ fi
   --enable-filter \
   --with-curl \
   --enable-opcache \
+  --enable-mbstring \
   "${BUILD_EXTRA[@]}"
 make LDFLAGS=$MAKE_LDFLAGS -j8
 make install-cli
