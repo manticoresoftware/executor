@@ -93,13 +93,14 @@ The command above will build the package on Linux with **PHP** `8.2.8`. Once it'
 
 ### Build for MacOS arm64
 
-While GitHub actions do support MacOS arm64 yet, you can build it manually.
-
-Once you update the manticore-executor formula in [homebrew-manticore](https://github.com/manticoresoftware/homebrew-manticore) repository, you should build it following these instructions on your arm64 MacOS:
+Build and collect assets, after we can put the assets to the repo.
 
 ```bash
-brew install --build-bottle manticoresoftware/manticore/manticore-executor
-brew bottle manticoresoftware/manticore/manticore-executor
+./build-osx "8.2.8"
+git checkout 0.7.6
+git tag v0.7.6
+APP_ARCH=$(arch) APP_NAME=manticore-executor APP_VERSION=$(git describe --tags | cut -dv -f2) GITHUB_SHA=$(git rev-parse HEAD) RUNNER_OS=macos ./collect-assets
+ls -lt *.tar.gz
 ```
 
 ### Prepare a package for Windows
