@@ -10,6 +10,7 @@ set -e
 PHP_VERSION="$1"
 ZSTD_REV="2dfcd6524ccdcef6dfdaa97d7f3716b866885093"
 PARALLEL_REV="25ba1ee594c350b0e3e239c6b995d772d0e4fc9c"
+DS_REV="d42750d69beb684ec3ef7b3da48fba769ce57ffc"
 SKIP_SYSTEM_DEPS="$2"
 BUILD_DEV="$3"
 BUILD_STATIC=1 # Always build static but dev
@@ -45,6 +46,11 @@ cd ..
 # parallel
 git clone https://github.com/manticoresoftware/krakjoe-parallel.git parallel
 cd parallel && git checkout "$PARALLEL_REV"
+cd ..
+
+# ds
+git clone https://github.com/php-ds/ext-ds.git ds
+cd ds && git checkout "$DS_REV"
 cd ..
 
 cd ..
