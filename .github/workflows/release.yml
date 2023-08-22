@@ -14,7 +14,7 @@ env:
   EXTRA_NAME: 'manticore-extra'
   EXTRA_DESC: 'Manticore extra package that includes executor and columnar lib'
   COLUMNAR_NAME: 'manticore-columnar-lib'
-  COLUMNAR_VERSION: '1.16.1'
+  COLUMNAR_VERSION: '2.2.1'
 
 jobs:
   build-artifact:
