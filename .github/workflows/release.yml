@@ -68,11 +68,10 @@ jobs:
             DOCKER_IMAGE=${{ env.DOCKER_TAG }}:${{ steps.vars.outputs.app_version }} \
             ./collect-assets
         shell: bash
-      - uses: actions/upload-artifact@v3
+      - uses: manticoresoftware/upload_artifact_with_retries@main
         with:
           name: artifact-${{ matrix.os }}-${{ matrix.arch }}
-          path: |
-            *${{ matrix.arch }}.tar.gz
+          path: ./*${{ matrix.arch }}.tar.gz
 
   build-artifact-dev:
     runs-on: ubuntu-22.04
@@ -94,11 +93,10 @@ jobs:
             ASSET_SUFFIX=-dev \
             ./collect-assets
         shell: bash
-      - uses: actions/upload-artifact@v3
+      - uses: manticoresoftware/upload_artifact_with_retries@main
         with:
           name: artifact-dev-ubuntu-22.04-amd64
-          path: |
-            *.tar.gz
+          path: ./*.tar.gz
 
   build-linux-packages:
     needs:
@@ -112,9 +110,10 @@ jobs:
           echo "rpm_suffix=_$( date +%y%m%d%H ).${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
           echo "deb_suffix=-$( date +%y%m%d%H )-${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
       - name: Download artifact
-        uses: actions/download-artifact@v3
+        uses: manticoresoftware/download_artifact_with_retries@main
         with:
           name: artifact-ubuntu-22.04-amd64
+          path: .
       - name: Prepare packages structure
         run: |
           # name is like assets manticore-executor_v0.5.1-221214-e089052_linux_amd64:
@@ -187,19 +186,25 @@ jobs:
 
           ls -lah ./*.deb
 
-      - uses: actions/upload-artifact@v3
+      - uses: manticoresoftware/upload_artifact_with_retries@main
         with:
           name: artifact-deb-amd64
-          path: |
-            ./*.deb
+          path: ./*.deb
 
-      - uses: actions/upload-artifact@v3
+      - uses: manticoresoftware/upload_artifact_with_retries@main
         with:
-          name: artifact-rpm-amd64
-          path: |
-            ./*.rpm
-            !./*-debuginfo-*.rpm
+          name: artifact-rpm-el7-amd64
+          path: ./*.el7.*.rpm
 
+      - uses: manticoresoftware/upload_artifact_with_retries@main
+        with:
+          name: artifact-rpm-el8-amd64
+          path: ./*.el8.*.rpm
+
+      - uses: manticoresoftware/upload_artifact_with_retries@main
+        with:
+          name: artifact-rpm-el9-amd64
+          path: ./*.el9.*.rpm
   build-linux-packages-arm64:
     needs:
       - build-artifact
@@ -212,9 +217,10 @@ jobs:
           echo "rpm_suffix=_$( date +%y%m%d%H ).${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
           echo "deb_suffix=-$( date +%y%m%d%H )-${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
       - name: Download artifact
-        uses: actions/download-artifact@v3
+        uses: manticoresoftware/download_artifact_with_retries@main
         with:
           name: artifact-ubuntu-22.04-arm64
+          path: .
       - name: Prepare package
         run: |
           # name is like assets manticore-executor_v0.5.1-221214-e089052_linux_arm64:
@@ -246,11 +252,10 @@ jobs:
         run: |
           ls -lah ./*.deb
 
-      - uses: actions/upload-artifact@v3
+      - uses: manticoresoftware/upload_artifact_with_retries@main
         with:
           name: artifact-deb-arm64
-          path: |
-            ./*.deb
+          path: ./*.deb
       - uses: manticoresoftware/actions-run-on-arch-action@master
         name: Preparing EL7 RPM package
         with:
@@ -301,12 +306,20 @@ jobs:
           cp $rpm_path "./artifacts/${{ env.APP_NAME }}-${version}-1.el8.aarch64.rpm"
           cp $rpm_path "./artifacts/${{ env.APP_NAME }}-${version}-1.el9.aarch64.rpm"
 
-      - uses: actions/upload-artifact@v3
+      - uses: manticoresoftware/upload_artifact_with_retries@main
         with:
-          name: artifact-rpm-arm64
-          path: |
-            ./artifacts/*.rpm
-            !./artifacts/*-debuginfo-*.rpm
+          name: artifact-rpm-el7-arm64
+          path: ./artifacts/*.el7.*.rpm
+
+      - uses: manticoresoftware/upload_artifact_with_retries@main
+        with:
+          name: artifact-rpm-el8-arm64
+          path: ./artifacts/*.el8.*.rpm
+
+      - uses: manticoresoftware/upload_artifact_with_retries@main
+        with:
+          name: artifact-rpm-el9-arm64
+          path: ./artifacts/*.el9.*.rpm
 
   build-extra-packages:
     runs-on: ubuntu-22.04
@@ -381,18 +394,25 @@ jobs:
 
           ls -lah ./*.deb
 
-      - uses: actions/upload-artifact@v3
+      - uses: manticoresoftware/upload_artifact_with_retries@main
         with:
           name: artifact-extra-deb
-          path: |
-            ./*.deb
+          path: ./*.deb
 
-      - uses: actions/upload-artifact@v3
+      - uses: manticoresoftware/upload_artifact_with_retries@main
         with:
-          name: artifact-extra-rpm
-          path: |
-            ./*.rpm
-            !./*-debuginfo-*.rpm
+          name: artifact-extra-el7--rpm
+          path: ./*.el7.noarch.rpm
+
+      - uses: manticoresoftware/upload_artifact_with_retries@main
+        with:
+          name: artifact-extra-el8--rpm
+          path: ./*.el8.noarch.rpm
+
+      - uses: manticoresoftware/upload_artifact_with_retries@main
+        with:
+          name: artifact-extra-el9--rpm
+          path: ./*.el9.noarch.rpm
 
   create-release:
     runs-on: ubuntu-22.04
@@ -427,7 +447,7 @@ jobs:
       - name: Write upload_url to file
         run: echo '${{ steps.create-release.outputs.upload_url }}' > upload_url.txt
 
-      - uses: actions/upload-artifact@v3
+      - uses: manticoresoftware/upload_artifact_with_retries@main
         with:
           name: create-release
           path: upload_url.txt
@@ -451,13 +471,15 @@ jobs:
             asset_name_suffix: linux_amd64-dev.tar.gz
             asset_content_type: application/gzip
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: manticoresoftware/download_artifact_with_retries@main
         with:
           name: artifact-${{ matrix.artifact_suffix }}
+          path: .
 
-      - uses: actions/download-artifact@v3
+      - uses: manticoresoftware/download_artifact_with_retries@main
         with:
           name: create-release
+          path: .
 
       - id: vars
         run: |
@@ -494,13 +516,14 @@ jobs:
             arch: arm64
             asset_content_type: application/x-rpm
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: manticoresoftware/download_artifact_with_retries@main
         with:
           name: artifact-${{ matrix.pkg }}-${{ matrix.arch }}
-
-      - uses: actions/download-artifact@v3
+          path: .
+      - uses: manticoresoftware/download_artifact_with_retries@main
         with:
           name: create-release
+          path: .
 
       - id: vars
         run: |
@@ -530,13 +553,15 @@ jobs:
             asset_content_type: application/x-rpm
     steps:
       # We download amd64 only but just because of noarch
-      - uses: actions/download-artifact@v3
+      - uses: manticoresoftware/download_artifact_with_retries@main
         with:
           name: artifact-extra-${{ matrix.pkg }}
+          path: .
 
-      - uses: actions/download-artifact@v3
+      - uses: manticoresoftware/download_artifact_with_retries@main
         with:
           name: create-release
+          path: .
 
       - name: Prepare package names
         run: |
@@ -568,194 +593,158 @@ jobs:
       - upload-release
       - upload-linux-packages
       - upload-extra-packages
-    runs-on: self-hosted
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         include:
-          # manticore-executor first
           - artifact: artifact-deb-amd64
-            ext: deb
-            script: upload_repo_deb
-            mask: ""
+            type: deb
+            arch: amd64
             delimiter: "-"
             distro: buster
           - artifact: artifact-deb-arm64
-            ext: deb
-            script: upload_repo_deb
-            mask: ""
+            type: deb
+            arch: arm64
             delimiter: "-"
             distro: buster
           - artifact: artifact-deb-amd64
-            ext: deb
-            script: upload_repo_deb
-            mask: ""
+            type: deb
+            arch: amd64
             delimiter: "-"
             distro: bionic
           - artifact: artifact-deb-arm64
-            ext: deb
-            script: upload_repo_deb
-            mask: ""
+            type: deb
+            arch: arm64
             delimiter: "-"
             distro: bionic
           - artifact: artifact-deb-amd64
-            ext: deb
-            script: upload_repo_deb
-            mask: ""
+            type: deb
+            arch: amd64
             delimiter: "-"
             distro: focal
           - artifact: artifact-deb-arm64
-            ext: deb
-            script: upload_repo_deb
-            mask: ""
+            type: deb
+            arch: arm64
             delimiter: "-"
             distro: focal
           - artifact: artifact-deb-amd64
-            ext: deb
-            script: upload_repo_deb
-            mask: ""
+            type: deb
+            arch: amd64
             delimiter: "-"
             distro: jammy
           - artifact: artifact-deb-arm64
-            ext: deb
-            script: upload_repo_deb
-            mask: ""
+            type: deb
+            arch: arm64
             delimiter: "-"
             distro: jammy
           - artifact: artifact-deb-amd64
-            ext: deb
-            script: upload_repo_deb
-            mask: ""
+            type: deb
+            arch: amd64
             delimiter: "-"
             distro: bullseye
           - artifact: artifact-deb-arm64
-            ext: deb
-            script: upload_repo_deb
-            mask: ""
+            type: deb
+            arch: arm64
             delimiter: "-"
             distro: bullseye
           - artifact: artifact-deb-amd64
-            ext: deb
-            script: upload_repo_deb
-            mask: ""
+            type: deb
+            arch: amd64
             delimiter: "-"
             distro: bookworm
           - artifact: artifact-deb-arm64
-            ext: deb
-            script: upload_repo_deb
-            mask: ""
+            type: deb
+            arch: arm64
             delimiter: "-"
             distro: bookworm
-          - artifact: artifact-rpm-amd64
-            ext: rpm
-            script: upload_repo_rpm
-            mask: "*.el7.{x86_64,aarch64,noarch}.rpm"
+          - artifact: artifact-el7-rpm-amd64
+            type: rpm
+            arch: x86_64
             delimiter: "_"
             distro: 7
-          - artifact: artifact-rpm-arm64
-            ext: rpm
-            script: upload_repo_rpm
-            mask: "*.el7.{x86_64,aarch64,noarch}.rpm"
+          - artifact: artifact-el7-rpm-arm64
+            type: rpm
+            arch: aarch
             delimiter: "_"
             distro: 7
-          - artifact: artifact-rpm-amd64
-            ext: rpm
-            script: upload_repo_rpm
-            mask: "*.el8.{x86_64,aarch64,noarch}.rpm"
+          - artifact: artifact-el8-rpm-amd64
+            type: rpm
+            arch: x86_64
             delimiter: "_"
             distro: 8
-          - artifact: artifact-rpm-arm64
-            ext: rpm
-            script: upload_repo_rpm
-            mask: "*.el8.{x86_64,aarch64,noarch}.rpm"
+          - artifact: artifact-el8-rpm-arm64
+            type: rpm
+            arch: aarch
             delimiter: "_"
             distro: 8
-          - artifact: artifact-rpm-amd64
-            ext: rpm
-            script: upload_repo_rpm
-            mask: "*.el9.{x86_64,aarch64,noarch}.rpm"
+          - artifact: artifact-el9-rpm-amd64
+            type: rpm
+            arch: x86_64
             delimiter: "_"
             distro: 9
-          - artifact: artifact-rpm-arm64
-            ext: rpm
-            script: upload_repo_rpm
-            mask: "*.el9.{x86_64,aarch64,noarch}.rpm"
+          - artifact: artifact-el9-rpm-arm64
+            type: rpm
+            arch: aarch
             delimiter: "_"
             distro: 9
           - artifact: artifact-macos-12-amd64
-            ext: tar.gz
-            script: upload_repo_arc
+            type: arc
+            arch: noarch
             delimiter: "-"
-            distro: ""
+            distro: ""  
           # manticore-extra meta package now
           - artifact: artifact-extra-deb
-            ext: deb
-            script: upload_repo_deb
-            mask: ""
+            type: deb
+            arch: all
             delimiter: "-"
             distro: buster
           - artifact: artifact-extra-deb
-            ext: deb
-            script: upload_repo_deb
-            mask: ""
+            type: deb
+            arch: all
             delimiter: "-"
             distro: bionic
           - artifact: artifact-extra-deb
-            ext: deb
-            script: upload_repo_deb
-            mask: ""
+            type: deb
+            arch: all
             delimiter: "-"
             distro: focal
           - artifact: artifact-extra-deb
-            ext: deb
-            script: upload_repo_deb
-            mask: ""
+            type: deb
+            arch: all
             delimiter: "-"
             distro: jammy
           - artifact: artifact-extra-deb
-            ext: deb
-            script: upload_repo_deb
-            mask: ""
+            type: deb
+            arch: all
             delimiter: "-"
             distro: bullseye
           - artifact: artifact-extra-deb
-            ext: deb
-            script: upload_repo_deb
-            mask: ""
+            type: deb
+            arch: all
             delimiter: "-"
             distro: bookworm
-          - artifact: artifact-extra-rpm
-            ext: rpm
-            script: upload_repo_rpm
-            mask: "*.el7.{x86_64,aarch64,noarch}.rpm"
+          - artifact: artifact-extra-el7-rpm
+            type: rpm
+            arch: noarch
             delimiter: "_"
             distro: 7
-          - artifact: artifact-extra-rpm
-            ext: rpm
-            script: upload_repo_rpm
-            mask: "*.el8.{x86_64,aarch64,noarch}.rpm"
+          - artifact: artifact-extra-el8-rpm
+            type: rpm
+            arch: noarch
             delimiter: "_"
             distro: 8
-          - artifact: artifact-extra-rpm
-            ext: rpm
-            script: upload_repo_rpm
-            mask: "*.el9.{x86_64,aarch64,noarch}.rpm"
+          - artifact: artifact-extra-el9-rpm
+            type: rpm
+            arch: noarch
             delimiter: "_"
             distro: 9
     steps:
-      - uses: actions/checkout@v3
-      - run: mkdir build
-      - uses: actions/download-artifact@v3
-        with:
-          name: ${{ matrix.artifact }}
-          path: ./build
-
-      - id: vars
-        run: |
-          echo "asset_name=$(ls ./build/*.${{ matrix.ext }} | head -n 1)" >> $GITHUB_OUTPUT
-
       - name: Deploy package
-        run: |
-          curl -sSL https://raw.githubusercontent.com/manticoresoftware/repo_scripts/main/${{ matrix.script }} > ${{ matrix.script }}
-          chmod +x ${{ matrix.script }}
-          DISTRO=${{ matrix.distro }} DIGIT_DELIMITER2="${{ matrix.delimiter }}" FILE_MASK="${{ matrix.mask }}" ./${{ matrix.script }}
-        shell: bash
+        uses: manticoresoftware/publish_to_repo@main
+        with:
+          ssh_key: ${{ secrets.REPO_SSH_KEY }}
+          distr: ${{ matrix.distro }}
+          arch: ${{ matrix.arch }}
+          artifact: ${{ matrix.artifact }}
+          type: ${{ matrix.type }}
+          delimiter: ${{ matrix.delimiter }}
