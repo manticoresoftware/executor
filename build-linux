@@ -42,7 +42,8 @@ ENABLE_STATIC=yes
   --with-pcre-jit --enable-zstd --with-libzstd  \
   --enable-pcntl --enable-posix \
   --enable-sockets \
-  --enable-zts --enable-parallel --enable-ds \
+  --enable-ds \
+  --enable-swoole \
   --with-openssl --with-zlib --with-zip \
   --enable-filter \
   --with-curl \
