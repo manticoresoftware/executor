@@ -177,34 +177,36 @@ jobs:
           cp -p "$RPMBUILD_DIR/RPMS/x86_64"/*.rpm $GITHUB_WORKSPACE
       - name: Rename packages to proper name
         run: |
-          ls -lah ./*.rpm
           version=${{ steps.vars.outputs.app_version }}${{ steps.vars.outputs.rpm_suffix }}
           rpm_path="./${{ env.APP_NAME }}-${version}-1.x86_64.rpm"
           cp $rpm_path "./${{ env.APP_NAME }}-${version}-1.el7.x86_64.rpm"
           cp $rpm_path "./${{ env.APP_NAME }}-${version}-1.el8.x86_64.rpm"
           mv $rpm_path "./${{ env.APP_NAME }}-${version}-1.el9.x86_64.rpm"
-
-          ls -lah ./*.deb
+          mkdir -p ./artifacts
+          mv *.deb ./artifacts/
+          mv *.rpm ./artifacts/
+          ls -lah ./artifacts/*.deb
+          ls -lah ./artifacts/*.rpm
 
       - uses: manticoresoftware/upload_artifact_with_retries@main
         with:
           name: artifact-deb-amd64
-          path: ./*.deb
+          path: ./artifacts/*.deb
 
       - uses: manticoresoftware/upload_artifact_with_retries@main
         with:
           name: artifact-rpm-el7-amd64
-          path: ./*.el7.*.rpm
+          path: ./artifacts/*.el7.*.rpm
 
       - uses: manticoresoftware/upload_artifact_with_retries@main
         with:
           name: artifact-rpm-el8-amd64
-          path: ./*.el8.*.rpm
+          path: ./artifacts/*.el8.*.rpm
 
       - uses: manticoresoftware/upload_artifact_with_retries@main
         with:
           name: artifact-rpm-el9-amd64
-          path: ./*.el9.*.rpm
+          path: ./artifacts/*.el9.*.rpm
   build-linux-packages-arm64:
     needs:
       - build-artifact
@@ -250,12 +252,14 @@ jobs:
 
       - name: Rename package to proper name
         run: |
-          ls -lah ./*.deb
+          mkdir -p ./artifacts
+          mv *.deb ./artifacts
+          ls -lah ./artifacts/*.deb
 
       - uses: manticoresoftware/upload_artifact_with_retries@main
         with:
           name: artifact-deb-arm64
-          path: ./*.deb
+          path: ./artifacts/*.deb
       - uses: manticoresoftware/actions-run-on-arch-action@master
         name: Preparing EL7 RPM package
         with:
@@ -308,17 +312,17 @@ jobs:
 
       - uses: manticoresoftware/upload_artifact_with_retries@main
         with:
-          name: artifact-rpm-el7-arm64
+          name: artifact-rpm-el7-aarch64
           path: ./artifacts/*.el7.*.rpm
 
       - uses: manticoresoftware/upload_artifact_with_retries@main
         with:
-          name: artifact-rpm-el8-arm64
+          name: artifact-rpm-el8-aarch64
           path: ./artifacts/*.el8.*.rpm
 
       - uses: manticoresoftware/upload_artifact_with_retries@main
         with:
-          name: artifact-rpm-el9-arm64
+          name: artifact-rpm-el9-aarch64
           path: ./artifacts/*.el9.*.rpm
 
   build-extra-packages:
@@ -384,35 +388,37 @@ jobs:
 
       - name: Rename packages to proper name
         run: |
-          ls -lah ./*.rpm
-
           version=${{ steps.vars.outputs.app_version }}${{ steps.vars.outputs.rpm_suffix }}
           rpm_path="./${{ env.EXTRA_NAME }}-${version}-1.noarch.rpm"
           cp $rpm_path "./${{ env.EXTRA_NAME }}-${version}-1.el7.noarch.rpm"
           cp $rpm_path "./${{ env.EXTRA_NAME }}-${version}-1.el8.noarch.rpm"
           mv $rpm_path "./${{ env.EXTRA_NAME }}-${version}-1.el9.noarch.rpm"
 
-          ls -lah ./*.deb
+          mkdir -p ./artifacts
+          mv *.deb ./artifacts/
+          mv *.rpm ./artifacts/
+          ls -lah ./artifacts/*.deb
+          ls -lah ./artifacts/*.rpm
 
       - uses: manticoresoftware/upload_artifact_with_retries@main
         with:
           name: artifact-extra-deb
-          path: ./*.deb
+          path: ./artifacts/*.deb
 
       - uses: manticoresoftware/upload_artifact_with_retries@main
         with:
-          name: artifact-extra-el7--rpm
-          path: ./*.el7.noarch.rpm
+          name: artifact-extra-rpm-el7
+          path: ./artifacts/*.el7.noarch.rpm
 
       - uses: manticoresoftware/upload_artifact_with_retries@main
         with:
-          name: artifact-extra-el8--rpm
-          path: ./*.el8.noarch.rpm
+          name: artifact-extra-rpm-el8
+          path: ./artifacts/*.el8.noarch.rpm
 
       - uses: manticoresoftware/upload_artifact_with_retries@main
         with:
-          name: artifact-extra-el9--rpm
-          path: ./*.el9.noarch.rpm
+          name: artifact-extra-rpm-el9
+          path: ./artifacts/*.el9.noarch.rpm
 
   create-release:
     runs-on: ubuntu-22.04
@@ -504,22 +510,35 @@ jobs:
       matrix:
         include:
           - pkg: deb
-            arch: amd64
+            suffix: "amd64"
             asset_content_type: application/vnd.debian.binary-package
           - pkg: deb
-            arch: arm64
+            suffix: "arm64"
             asset_content_type: application/vnd.debian.binary-package
           - pkg: rpm
-            arch: amd64
+            suffix: "el7-amd64"
             asset_content_type: application/x-rpm
           - pkg: rpm
-            arch: arm64
+            suffix: "el8-amd64"
+            asset_content_type: application/x-rpm
+          - pkg: rpm
+            suffix: "el9-amd64"
+            asset_content_type: application/x-rpm
+          - pkg: rpm
+            suffix: "el7-aarch64"
+            asset_content_type: application/x-rpm
+          - pkg: rpm
+            suffix: "el8-aarch64"
+            asset_content_type: application/x-rpm
+          - pkg: rpm
+            suffix: "el9-aarch64"
             asset_content_type: application/x-rpm
     steps:
       - uses: manticoresoftware/download_artifact_with_retries@main
         with:
-          name: artifact-${{ matrix.pkg }}-${{ matrix.arch }}
+          name: artifact-${{ matrix.pkg }}-${{ matrix.suffix }}
           path: .
+
       - uses: manticoresoftware/download_artifact_with_retries@main
         with:
           name: create-release
@@ -528,7 +547,7 @@ jobs:
       - id: vars
         run: |
           echo "upload_url=$(cat upload_url.txt)" >> $GITHUB_OUTPUT
-          echo "asset_name=$(ls *.${{ matrix.pkg }} | head -n 1)" >> $GITHUB_OUTPUT
+          echo "asset_name=$(ls ./artifacts/*.${{ matrix.pkg }} | head -n 1)" >> $GITHUB_OUTPUT
 
       - name: Upload Release Asset
         id: upload-release-asset
@@ -548,14 +567,22 @@ jobs:
       matrix:
         include:
           - pkg: deb
+            suffix: ""
             asset_content_type: application/vnd.debian.binary-package
           - pkg: rpm
+            suffix: "-el7"
+            asset_content_type: application/x-rpm
+          - pkg: rpm
+            suffix: "-el8"
+            asset_content_type: application/x-rpm
+          - pkg: rpm
+            suffix: "-el9"
             asset_content_type: application/x-rpm
     steps:
       # We download amd64 only but just because of noarch
       - uses: manticoresoftware/download_artifact_with_retries@main
         with:
-          name: artifact-extra-${{ matrix.pkg }}
+          name: artifact-extra-${{ matrix.pkg }}${{ matrix.suffix }}
           path: .
 
       - uses: manticoresoftware/download_artifact_with_retries@main
@@ -565,7 +592,7 @@ jobs:
 
       - name: Prepare package names
         run: |
-          file=$(ls *.${{ matrix.pkg }} | head -n 1)
+          file=$(ls ./artifacts/*.${{ matrix.pkg }} | head -n 1)
           mv "$file" artifact
           rm -f *.${{ matrix.pkg }}
           file=${file/amd64/all}
@@ -575,7 +602,7 @@ jobs:
       - id: vars
         run: |
           echo "upload_url=$(cat upload_url.txt)" >> $GITHUB_OUTPUT
-          echo "asset_name=$(ls *.${{ matrix.pkg }} | head -n 1)" >> $GITHUB_OUTPUT
+          echo "asset_name=$(ls ./artifacts/*.${{ matrix.pkg }} | head -n 1)" >> $GITHUB_OUTPUT
 
       - name: Upload Release Asset
         id: upload-release-asset
@@ -657,32 +684,32 @@ jobs:
             arch: arm64
             delimiter: "-"
             distro: bookworm
-          - artifact: artifact-el7-rpm-amd64
+          - artifact: artifact-rpm-el7-amd64
             type: rpm
             arch: x86_64
             delimiter: "_"
             distro: 7
-          - artifact: artifact-el7-rpm-arm64
+          - artifact: artifact-rpm-el7-aarch64
             type: rpm
             arch: aarch
             delimiter: "_"
             distro: 7
-          - artifact: artifact-el8-rpm-amd64
+          - artifact: artifact-rpm-el8-amd64
             type: rpm
             arch: x86_64
             delimiter: "_"
             distro: 8
-          - artifact: artifact-el8-rpm-arm64
+          - artifact: artifact-rpm-el8-aarch64
             type: rpm
             arch: aarch
             delimiter: "_"
             distro: 8
-          - artifact: artifact-el9-rpm-amd64
+          - artifact: artifact-rpm-el9-amd64
             type: rpm
             arch: x86_64
             delimiter: "_"
             distro: 9
-          - artifact: artifact-el9-rpm-arm64
+          - artifact: artifact-rpm-el9-aarch64
             type: rpm
             arch: aarch
             delimiter: "_"
@@ -691,7 +718,7 @@ jobs:
             type: arc
             arch: noarch
             delimiter: "-"
-            distro: ""  
+            distro: ""
           # manticore-extra meta package now
           - artifact: artifact-extra-deb
             type: deb
@@ -723,17 +750,17 @@ jobs:
             arch: all
             delimiter: "-"
             distro: bookworm
-          - artifact: artifact-extra-el7-rpm
+          - artifact: artifact-extra-rpm-el7
             type: rpm
             arch: noarch
             delimiter: "_"
             distro: 7
-          - artifact: artifact-extra-el8-rpm
+          - artifact: artifact-extra-rpm-el8
             type: rpm
             arch: noarch
             delimiter: "_"
             distro: 8
-          - artifact: artifact-extra-el9-rpm
+          - artifact: artifact-extra-rpm-el9
             type: rpm
             arch: noarch
             delimiter: "_"
