@@ -1,0 +1,6 @@
+FROM ubuntu:22.04
+
+# Install the manticore-executor binary
+COPY build/manticore-executor /usr/bin/manticore-executor
+
+ENTRYPOINT [ "/usr/bin/manticore-executor" ]
