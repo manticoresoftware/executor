@@ -15,6 +15,7 @@ env:
   EXTRA_DESC: 'Manticore extra package that includes executor and columnar lib'
   COLUMNAR_NAME: 'manticore-columnar-lib'
   COLUMNAR_VERSION: '2.2.1'
+  DOCKER_CLI_EXPERIMENTAL: enabled
 
 jobs:
   vars:
@@ -786,11 +787,16 @@ jobs:
           type: ${{ matrix.type }}
           delimiter: ${{ matrix.delimiter }}
 
-
   deploy-docker:
     runs-on: ubuntu-22.04
     needs:
+      - vars
       - deploy
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+          - arch: arm64
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -803,24 +809,12 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Download artifact
-        uses: manticoresoftware/download_artifact_with_retries@main
-        with:
-          name: artifact-ubuntu-22.04-amd64
-          path: .
-      - name: Prepare packages structure
-        run: |
-          # name is like assets manticore-executor_v0.5.1-221214-e089052_linux_amd64:
-          tar -xzf *.tar.gz
-          mkdir -p build
-          cp -p *_linux_amd64/${{ env.APP_NAME }} build/{{ env.APP_NAME }}
-          chmod +x build/{{ env.APP_NAME }}
       - name: Build docker image
         uses: docker/build-push-action@v3
         with:
           context: .
           file: ./Dockerfile-dist
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64, linux/arm64
           load: false
           push: true
           tags: ${{ env.DOCKER_TAG }}:${{ needs.vars.outputs.app_version }}
