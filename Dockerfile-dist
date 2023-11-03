@@ -1,0 +1,13 @@
+FROM ubuntu:22.04
+
+RUN apt-get update -y && \
+  apt-get install -y sudo && \
+  apt-get clean -y
+COPY ./build-linux ./build-linux
+COPY ./build-bash-base.sh ./build-bash-base.sh
+COPY ./helper.sh ./helper.sh
+RUN ./build-linux 8.2.12 0 0 && \
+  cp build/dist/bin/php /usr/bin/manticore-executor && \
+  rm -fr build
+
+ENTRYPOINT [ "/usr/bin/manticore-executor" ]
