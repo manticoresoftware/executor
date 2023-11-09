@@ -8,7 +8,6 @@
 
 set -e
 install_deps() {
-  brew upgrade
   brew install bash curl autoconf automake bison re2c zstd git openssl zlib cmake libzip
 
   OPENSSL_PREFIX="$(brew --prefix openssl)"
