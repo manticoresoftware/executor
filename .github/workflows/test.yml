@@ -7,7 +7,7 @@ on:
 
 env:
   APP_NAME: 'manticore-executor'
-  PHP_VERSION: '8.2.8'
+  PHP_VERSION: '8.2.12'
   MAINTAINER: 'Manticore'
   DESC: 'Custom built PHP executor for Manticore.'
 
@@ -18,7 +18,7 @@ jobs:
       matrix:
         os:
           - ubuntu-22.04
-          - macos-12
+          - macos-13
         include:
           - job_name: 'Build static in Alpine'
             os: ubuntu-22.04
@@ -29,7 +29,7 @@ jobs:
             use_docker: false
             script_name: ./build-linux
           - job_name: 'Build static on OSX'
-            os: macos-12
+            os: macos-13
             use_docker: false
             script_name: ./build-osx
     steps:

@@ -54,8 +54,12 @@ jobs:
             arch: arm64
             use_buildx: true
             run: ""
-          - os: macos-12
+          - os: macos-13
             arch: amd64
+            use_buildx: false
+            run: ./build-osx
+          - os: macos-13-arm64
+            arch: arm64
             use_buildx: false
             run: ./build-osx
     steps:
@@ -480,8 +484,11 @@ jobs:
           - artifact_suffix: ubuntu-22.04-arm64
             asset_name_suffix: linux_arm64.tar.gz
             asset_content_type: application/gzip
-          - artifact_suffix: macos-12-amd64
+          - artifact_suffix: macos-13-amd64
             asset_name_suffix: macos_amd64.tar.gz
+            asset_content_type: application/gzip
+          - artifact_suffix: macos-13-arm64
+            asset_name_suffix: macos_arm64.tar.gz
             asset_content_type: application/gzip
           - artifact_suffix: dev-ubuntu-22.04-amd64
             asset_name_suffix: linux_amd64-dev.tar.gz
@@ -724,7 +731,12 @@ jobs:
             arch: aarch
             delimiter: "_"
             distro: 9
-          - artifact: artifact-macos-12-amd64
+          - artifact: artifact-macos-13-amd64
+            type: arc
+            arch: noarch
+            delimiter: "-"
+            distro: ""
+          - artifact: artifact-macos-13-arm64
             type: arc
             arch: noarch
             delimiter: "-"
