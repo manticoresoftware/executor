@@ -8,7 +8,9 @@
 # ! Must be defined: APP_ARCH, APP_NAME, APP_VERSION, GITHUB_SHA, RUNNER_OS
 # This script is part of tools to use in GitHub workflow
 
-assets="${APP_NAME}_${APP_VERSION}-$( date +%y%m%d )-${GITHUB_SHA:0:7}_$(echo "${RUNNER_OS}" | tr '[:upper:]' '[:lower:]')_${APP_ARCH}${ASSET_SUFFIX}"
+current_date=$( date +%y%m%d )
+APP_DATE=${APP_DATE:-$current_date}
+assets="${APP_NAME}_${APP_VERSION}-${APP_DATE}-${GITHUB_SHA:0:7}_$(echo "${RUNNER_OS}" | tr '[:upper:]' '[:lower:]')_${APP_ARCH}${ASSET_SUFFIX}"
 
 pwd
 echo "$assets"

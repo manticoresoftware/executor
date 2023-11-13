@@ -88,6 +88,7 @@ jobs:
           APP_ARCH=${{ matrix.arch }} \
             APP_VERSION=${{ needs.vars.outputs.app_version }} \
             APP_NAME=${{ env.APP_NAME }} \
+            APP_DATE=${{ needs.vars.outputs.app_date }} \
             RUNNER_OS="${{ runner.os }}" \
             DOCKER_IMAGE=${{ env.DOCKER_TAG }}:${{ needs.vars.outputs.app_version }} \
             ./collect-assets
@@ -115,6 +116,7 @@ jobs:
           APP_ARCH=amd64 \
             APP_VERSION=${{ needs.vars.outputs.app_version }} \
             APP_NAME=${{ env.APP_NAME }} \
+            APP_DATE=${{ needs.vars.outputs.app_date }} \
             RUNNER_OS="${{ runner.os }}" \
             ASSET_SUFFIX=-dev \
             ./collect-assets
