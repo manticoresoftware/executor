@@ -59,10 +59,10 @@ jobs:
             arch: amd64
             use_buildx: false
             run: ./build-osx
-          - os: macos-13-arm64
-            arch: arm64
-            use_buildx: false
-            run: ./build-osx
+          # - os: macos-13-arm64
+          #   arch: arm64
+          #   use_buildx: false
+          #   run: ./build-osx
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -488,9 +488,9 @@ jobs:
           - artifact_suffix: macos-13-amd64
             asset_name_suffix: macos_amd64.tar.gz
             asset_content_type: application/gzip
-          - artifact_suffix: macos-13-arm64
-            asset_name_suffix: macos_arm64.tar.gz
-            asset_content_type: application/gzip
+          # - artifact_suffix: macos-13-arm64
+          #   asset_name_suffix: macos_arm64.tar.gz
+          #   asset_content_type: application/gzip
           - artifact_suffix: dev-ubuntu-22.04-amd64
             asset_name_suffix: linux_amd64-dev.tar.gz
             asset_content_type: application/gzip
@@ -737,11 +737,11 @@ jobs:
             arch: noarch
             delimiter: "-"
             distro: ""
-          - artifact: artifact-macos-13-arm64
-            type: arc
-            arch: noarch
-            delimiter: "-"
-            distro: ""
+          # - artifact: artifact-macos-13-arm64
+          #   type: arc
+          #   arch: noarch
+          #   delimiter: "-"
+          #   distro: ""
           # manticore-extra meta package now
           - artifact: artifact-extra-deb
             type: deb
