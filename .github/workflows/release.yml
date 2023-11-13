@@ -830,3 +830,35 @@ jobs:
           load: false
           push: true
           tags: ${{ env.DOCKER_TAG }}:${{ needs.vars.outputs.app_version }}
+  
+  update-manticoresearch-deps:
+    needs:
+      - vars
+      - deploy
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: "manticoresoftware/manticoresearch"
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update deps.txt
+        id: deps
+        run: |
+          version=${{ needs.vars.outputs.app_version }}
+          date=${{ needs.vars.outputs.app_date }}
+          commit=${{ needs.vars.outputs.app_commit }}
+
+          version_string="$version $date $commit"
+          echo "version_string=${version_string// /-}" >> $GITHUB_OUTPUT
+          sed -i '/^executor\s/c\executor '"$version_string" deps.txt
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.PR_TOKEN }}
+          commit-message: "Bump executor version to: ${{ steps.deps.outputs.version_string }}"
+          title: "Update executor version"
+          body: "Updating executor version to ${{ steps.deps.outputs.version_string }}"
+          branch: "update-executor-version"
+          draft: false
