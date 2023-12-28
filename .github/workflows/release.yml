@@ -369,7 +369,7 @@ jobs:
           arch: 'all'
           desc: '${{ env.EXTRA_DESC }}'
           license: 'Apache-2.0'
-          depends: '${{ env.APP_NAME }} (>= ${{ needs.vars.outputs.app_version }}), ${{ env.COLUMNAR_NAME }} (>= ${{ env. COLUMNAR_VERSION }}), ca-certificates'
+          depends: '${{ env.APP_NAME }} (>= ${{ needs.vars.outputs.app_version }}), ${{ env.COLUMNAR_NAME }} (>= ${{ env.COLUMNAR_VERSION }}), ${{ env.GALERA_NAME }} (>= ${{ env.GALERA_VERSION }}), ca-certificates'
       - name: Build RPM packages
         run: |
           sudo apt-get update -y -q
@@ -395,6 +395,8 @@ jobs:
           sed -i 's/{{ EXECUTOR_VERSION }}/${{ needs.vars.outputs.app_version }}${{ needs.vars.outputs.rpm_suffix }}/g' $spec_file
           sed -i 's/{{ COLUMNAR_NAME }}/${{ env.COLUMNAR_NAME }}/g' $spec_file
           sed -i 's/{{ COLUMNAR_VERSION }}/${{ env.COLUMNAR_VERSION }}/g' $spec_file
+          sed -i 's/{{ GALERA_NAME }}/${{ env.GALERA_NAME }}/g' $spec_file
+          sed -i 's/{{ GALERA_VERSION }}/${{ env.GALERA_VERSION }}/g' $spec_file
 
           tar czf tmp.tar.gz "${{ env.EXTRA_NAME }}/"
           mkdir -p "$RPMBUILD_SOURCE_DIR"
