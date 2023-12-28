@@ -15,6 +15,8 @@ env:
   EXTRA_DESC: 'Manticore extra package that includes executor and columnar lib'
   COLUMNAR_NAME: 'manticore-columnar-lib'
   COLUMNAR_VERSION: '2.2.1'
+  GALERA_NAME: 'manticore-galera'
+  GALERA_VERSION: '6.2.13'
   DOCKER_CLI_EXPERIMENTAL: enabled
 
 jobs:
@@ -832,7 +834,7 @@ jobs:
           load: false
           push: true
           tags: ${{ env.DOCKER_TAG }}:${{ needs.vars.outputs.app_version }}
-  
+
   update-manticoresearch-deps:
     needs:
       - vars
