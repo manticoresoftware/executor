@@ -16,7 +16,7 @@ env:
   COLUMNAR_NAME: 'manticore-columnar-lib'
   COLUMNAR_VERSION: '2.2.1'
   GALERA_NAME: 'manticore-galera'
-  GALERA_VERSION: '6.2.13'
+  GALERA_VERSION: '3.37'
   DOCKER_CLI_EXPERIMENTAL: enabled
 
 jobs:
