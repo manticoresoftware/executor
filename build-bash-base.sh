@@ -69,6 +69,7 @@ if [[ "$BUILD_DEV" == "1" ]]; then
     "--enable-phar"
     # Little extra exts in case we will need it
     "--enable-bcmath"
+    "--enable-ctype"
     "--with-gmp"
     # Profiling extensions
     "--enable-debug"
