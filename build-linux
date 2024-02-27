@@ -17,7 +17,7 @@ set -xe
 
 install_deps() {
   sudo apt-get update -y
-  sudo apt-get install -y curl build-essential autoconf automake bison re2c libzstd-dev pkg-config git libssl-dev zlib1g-dev libzip-dev libonig-dev cmake libcurl4-openssl-dev libzip-dev
+  sudo apt-get install -y curl build-essential autoconf automake bison re2c libzstd-dev pkg-config git libssl-dev zlib1g-dev libzip-dev libonig-dev cmake libcurl4-openssl-dev libzip-dev librdkafka-dev
 }
 
 install_dev_deps() {
@@ -44,6 +44,7 @@ ENABLE_STATIC=yes
   --enable-sockets \
   --enable-ds \
   --enable-swoole \
+  --with-rdkafka \
   --with-openssl --with-zlib --with-zip \
   --enable-filter \
   --with-curl \

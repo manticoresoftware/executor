@@ -27,6 +27,10 @@ install_deps() {
   install_curl
 
   install_libzip
+
+  install_zlib
+
+  install_rdkafka
 }
 
 install_dev_deps() {
@@ -54,6 +58,7 @@ ENABLE_STATIC=yes
   --enable-sockets \
   --enable-ds \
   --enable-swoole \
+  --with-rdkafka \
   --with-openssl --with-zlib --with-zip \
   --enable-filter \
   --with-curl \

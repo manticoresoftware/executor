@@ -11,6 +11,7 @@ PHP_VERSION="$1"
 ZSTD_REV="2dfcd6524ccdcef6dfdaa97d7f3716b866885093"
 DS_REV="d42750d69beb684ec3ef7b3da48fba769ce57ffc"
 SWOOLE_REV="b72d22ad65dbcc0a5cf75b4d6a483b73c9f32157"
+RDKAFKA_REV="bcd5004f461d1d3a5f879bb21280bdde6f6800c2"
 SKIP_SYSTEM_DEPS="$2"
 BUILD_DEV="$3"
 BUILD_STATIC=1 # Always build static but dev
@@ -51,6 +52,12 @@ cd ..
 # openswoole
 git clone https://github.com/swoole/swoole-src.git swoole
 cd swoole && git checkout "$SWOOLE_REV"
+cd ..
+
+# rdkafka
+git clone https://github.com/arnaud-lb/php-rdkafka.git
+mv php-rdkafka rdkafka
+cd rdkafka && git checkout "$RDKAFKA_REV"
 cd ..
 
 cd ..

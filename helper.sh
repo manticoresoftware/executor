@@ -9,16 +9,42 @@ install_curl() {
 	make -j8
 	make install
 	cd ..
+	rm -fr curl-8.0.0
 }
 
 install_libzip() {
 	test -d libzip-1.9.2 && rm -fr "$_"
 	curl -sSL https://github.com/nih-at/libzip/releases/download/v1.9.2/libzip-1.9.2.tar.gz | tar -xzf -
 	cd libzip-1.9.2 && mkdir -p build && cd build
-	cmake -DBUILD_SHARED_LIBS=OFF -DENABLE_LZMA=OFF -DENABLE_BZIP2=OFF ..
+	cmake -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_SHARED_LIBS=OFF -DENABLE_LZMA=OFF -DENABLE_BZIP2=OFF ..
 	make -j4 && make install
 	cd ../..
 	rm -fr libzip-1.9.2
+}
+
+install_zlib() {
+	test -d zlib-1.3.1 && rm -fr "$_"
+	curl -sSL https://github.com/madler/zlib/releases/download/v1.3.1/zlib-1.3.1.tar.gz | tar -xzf -
+	cd zlib-1.3.1
+	export CFLAGS="-O3 -fPIC"
+	./configure --prefix=/usr --static
+	make -j4 && make install
+	cd ..
+	rm -fr zlib-1.3.1
+}
+
+install_rdkafka() {
+	test -d librdkafka-2.3.0 && rm -fr "$_"
+	curl -sSL https://github.com/confluentinc/librdkafka/archive/refs/tags/v2.3.0.tar.gz | tar -xzf -
+	cd librdkafka-2.3.0
+	./configure --prefix=/usr --enable-static --disable-shared \
+		--disable-debug-symbols --enable-strip \
+		--disable-sasl --enable-lz4 --enable-zstd \
+		--enable-zlib --enable-curl \
+		--disable-regex-ext
+	make -j4 && make install
+	cd ..
+	rm -fr librdkafka-2.3.0
 }
 
 install_libxml2() {
