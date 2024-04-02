@@ -8,7 +8,7 @@ on:
 env:
   APP_NAME: 'manticore-executor'
   DOCKER_TAG: 'manticoresearch/manticore-executor'
-  PHP_VERSION: '8.3.3'
+  PHP_VERSION: '8.3.4'
   MAINTAINER: 'Manticore'
   DESC: 'Custom built PHP executor for Manticore.'
   EXTRA_NAME: 'manticore-extra'
@@ -111,7 +111,7 @@ jobs:
         run: |
           echo "app_version=$(echo ${{ github.ref_name }} | cut -dv -f2)" >> $GITHUB_OUTPUT
       - name: Build manticore-executor-dev
-        run: ./build-linux 8.3.3 0 1
+        run: ./build-linux 8.3.4 0 1
         shell: bash
       - name: Create artifact
         run: |
