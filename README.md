@@ -96,10 +96,10 @@ The command above will build the package on Linux with **PHP** `8.3.4`. Once it'
 Build and collect assets, after we can put the assets to the repo.
 
 ```bash
-./build-osx "8.3.4"
-git checkout 0.7.6
-git tag v0.7.6
-APP_ARCH=$(arch) APP_NAME=manticore-executor APP_VERSION=$(git describe --tags | cut -dv -f2) GITHUB_SHA=$(git rev-parse HEAD) RUNNER_OS=macos ./collect-assets
+./build-osx "8.3.4" # Builds PHP version 8.3.4
+git checkout 0.7.6 # 0.7.6 is a branch (not a tag). It's important to checkout from it in case you are making a release. If you are building a dev version, consider checking out from the master branch or the latest dev tag
+git tag v0.7.6 # makes a new tag (may be not needed)
+APP_ARCH=$(arch) APP_NAME=manticore-executor APP_VERSION=$(git describe --tags | cut -dv -f2) GITHUB_SHA=$(git rev-parse HEAD) RUNNER_OS=macos ./collect-assets # 'git describe --tags' returns current tag, 'cut -dv -f2' removes 'v' before 1.2.3, collect-assets prepares an archive with correct names
 ls -lt *.tar.gz
 ```
 
