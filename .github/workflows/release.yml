@@ -491,8 +491,8 @@ jobs:
           - artifact_suffix: ubuntu-22.04-arm64
             asset_name_suffix: linux_arm64.tar.gz
             asset_content_type: application/gzip
-          - artifact_suffix: macos-13-amd64
-            asset_name_suffix: macos_amd64.tar.gz
+          - artifact_suffix: macos-13-x86_64
+            asset_name_suffix: macos_x86_64.tar.gz
             asset_content_type: application/gzip
           # - artifact_suffix: macos-13-arm64
           #   asset_name_suffix: macos_arm64.tar.gz
