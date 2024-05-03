@@ -738,7 +738,7 @@ jobs:
             arch: aarch
             delimiter: "_"
             distro: 9
-          - artifact: artifact-macos-13-amd64
+          - artifact: artifact-macos-13-x86_64
             type: arc
             arch: noarch
             delimiter: "-"
