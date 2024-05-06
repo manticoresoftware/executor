@@ -58,7 +58,7 @@ jobs:
             use_buildx: true
             run: ""
           - os: macos-13
-            arch: amd64
+            arch: x86_64
             use_buildx: false
             run: ./build-osx
           # - os: macos-13-arm64
