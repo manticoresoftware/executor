@@ -66,13 +66,12 @@ xattr -dr com.apple.quarantine manticore-executor
    * Centos 7/8 x86_64 and arm64
    * Ubuntu Xenial/Bionic/Focal/Jammy x86_64 and arm64
    * Debian Stretch/Buster/Bullseye x86_64 and arm64
-   * MacOS x86_64
+   * MacOS x86_64 and arm64
 
 2. The same workflow deploys the packages to [repositories](https://repo.manticoresearch.com)
 
 3. What's to be done manually after the above is:
 
-   * build binaries for MacOS arm64 following [this instruction](#how-to-build-manually)
    * update `root_url` in the [Homebrew formula](https://github.com/manticoresoftware/homebrew-manticore/blob/main/Formula/manticore-executor.rb) file with the latest release version
    * update `DEB_PKG` variables in the [Dockerfile](https://github.com/manticoresoftware/manticoresearch-backup/blob/main/Dockerfile) of [manticoresearch-backup](https://github.com/manticoresoftware/manticoresearch-backup) repository
 
@@ -91,23 +90,3 @@ The scripts accept a version of PHP as a parameter. The current version is `8.3.
 
 The command above will build the package on Linux with **PHP** `8.3.4`. Once it's done, you can find your binary in folder `dist/bin`.
 
-### Build for MacOS arm64
-
-Build and collect assets, after we can put the assets to the repo.
-
-```bash
-./build-osx "8.3.4" # Builds PHP version 8.3.4
-git checkout 0.7.6 # 0.7.6 is a branch (not a tag). It's important to checkout from it in case you are making a release. If you are building a dev version, consider checking out from the master branch or the latest dev tag
-git tag v0.7.6 # makes a new tag (may be not needed)
-APP_ARCH=$(arch) APP_NAME=manticore-executor APP_VERSION=$(git describe --tags | cut -dv -f2) GITHUB_SHA=$(git rev-parse HEAD) RUNNER_OS=macos ./collect-assets # 'git describe --tags' returns current tag, 'cut -dv -f2' removes 'v' before 1.2.3, collect-assets prepares an archive with correct names
-ls -lt *.tar.gz
-```
-
-### Prepare a package for Windows
-
-1. Download pre-built thread-safe version of [PHP](https://windows.php.net/download/)
-2. Download and add to php folder parallel lib from official [artifacts](https://github.com/krakjoe/parallel/actions/workflows/windows.yml)
-3. Download and add to PHP folder [ZSTD lib](https://pecl.php.net/package/zstd/0.11.0/windows) from PECL binary builds
-4. Rename `php.exe` -> `manticore-executor.exe`
-5. Rename and edit `php.ini-production` -> `php.ini` and add `extension=...` with wanted extensions to load
-6. Zip the final archive and upload to https://repo.manticoresearch.com/repository/manticoresearch_windows/dev/x64/
