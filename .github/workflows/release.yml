@@ -61,10 +61,10 @@ jobs:
             arch: x86_64
             use_buildx: false
             run: ./build-osx
-          # - os: macos-13-arm64
-          #   arch: arm64
-          #   use_buildx: false
-          #   run: ./build-osx
+          - os: macos-14
+            arch: arm64
+            use_buildx: false
+            run: ./build-osx
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -268,6 +268,7 @@ jobs:
           package_root: .debpkg
           maintainer: ${{ env.MAINTAINER }}
           version: ${{ needs.vars.outputs.app_version }}${{ needs.vars.outputs.deb_suffix }}
+
           arch: 'arm64'
           desc: '${{ env.DESC }}'
           license: 'PHP-3.01'
