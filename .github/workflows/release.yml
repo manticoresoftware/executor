@@ -444,6 +444,10 @@ jobs:
 
   create-release:
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+      pull-requests: write
+      repository-projects: write    
     needs:
       - build-artifact
       - build-artifact-dev
