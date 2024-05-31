@@ -53,7 +53,7 @@ jobs:
             arch: amd64
             use_buildx: true
             run: ""
-          - os: ubuntu-22.04
+          - os: macos-14 
             arch: arm64
             use_buildx: true
             run: ""
@@ -68,9 +68,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Set up QEMU
-        if: ${{ matrix.use_buildx == true }}
-        uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
         if: ${{ matrix.use_buildx == true }}
         uses: docker/setup-buildx-action@v2
@@ -811,7 +808,7 @@ jobs:
           delimiter: ${{ matrix.delimiter }}
 
   deploy-docker:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.os }}
     needs:
       - vars
       - deploy
@@ -819,12 +816,12 @@ jobs:
       matrix:
         include:
           - arch: amd64
+            os: ubuntu-22.04
           - arch: arm64
+            os: macos-14
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       - name: Login to Docker Hub
