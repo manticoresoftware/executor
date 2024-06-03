@@ -43,25 +43,30 @@ jobs:
           echo "deb_suffix=-${date}-$commit" >> $GITHUB_OUTPUT
 
   build-artifact:
+    name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     needs:
       - vars
     strategy:
       matrix:
         include:
-          - os: ubuntu-22.04
+          - name: AMD64 with buildx for Linux
+            os: ubuntu-22.04
             arch: amd64
             use_buildx: true
             run: ""
-          - os: ubuntu-22.04
+          - name: ARM64 with buildx for Linux
+            os: ubuntu-22.04
             arch: arm64
             use_buildx: true
             run: ""
-          - os: macos-13
+          - name: AMD64 native on OSX
+            os: macos-13
             arch: x86_64
             use_buildx: false
             run: ./build-osx
-          - os: macos-14
+          - name: ARM64 native on OSX
+            os: macos-14
             arch: arm64
             use_buildx: false
             run: ./build-osx
@@ -73,7 +78,7 @@ jobs:
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
         if: ${{ matrix.use_buildx == true }}
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
       - name: Build docker image
         if: ${{ matrix.use_buildx == true }}
         uses: docker/build-push-action@v3
@@ -811,15 +816,20 @@ jobs:
           delimiter: ${{ matrix.delimiter }}
 
   deploy-docker:
-    runs-on: ubuntu-22.04
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
     needs:
       - vars
       - deploy
     strategy:
       matrix:
         include:
-          - arch: amd64
-          - arch: arm64
+          - name: Deploy docker amd64
+            arch: amd64
+            os: ubuntu-22.04
+          - name: Deploy docker arm64
+            arch: arm64
+            os: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v3
