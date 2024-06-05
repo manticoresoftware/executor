@@ -580,8 +580,10 @@ jobs:
 
       - id: vars
         run: |
+          asset_path=$(ls ./artifacts/*.${{ matrix.pkg }} | head -n 1)
           echo "upload_url=$(cat upload_url.txt)" >> $GITHUB_OUTPUT
-          echo "asset_name=$(ls ./artifacts/*.${{ matrix.pkg }} | head -n 1)" >> $GITHUB_OUTPUT
+          echo "asset_path=$asset_path" >> $GITHUB_OUTPUT
+          echo "asset_name=$(basename $asset_path)" >> $GITHUB_OUTPUT
 
       - name: Upload Release Asset
         id: upload-release-asset
@@ -590,7 +592,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.vars.outputs.upload_url }}
-          asset_path: ${{ steps.vars.outputs.asset_name }}
+          asset_path: ${{ steps.vars.outputs.asset_path }}
           asset_name: ${{ steps.vars.outputs.asset_name }}
           asset_content_type: ${{ matrix.asset_content_type }}
 
@@ -635,8 +637,10 @@ jobs:
         shell: bash
       - id: vars
         run: |
+          asset_path=$(ls ./artifacts/*.${{ matrix.pkg }} | head -n 1)
           echo "upload_url=$(cat upload_url.txt)" >> $GITHUB_OUTPUT
-          echo "asset_name=$(ls ./artifacts/*.${{ matrix.pkg }} | head -n 1)" >> $GITHUB_OUTPUT
+          echo "asset_path=$asset_path" >> $GITHUB_OUTPUT
+          echo "asset_name=$(basename $asset_path)" >> $GITHUB_OUTPUT
 
       - name: Upload Release Asset
         id: upload-release-asset
@@ -645,7 +649,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.vars.outputs.upload_url }}
-          asset_path: ${{ steps.vars.outputs.asset_name }}
+          asset_path: ${{ steps.vars.outputs.asset_path }}
           asset_name: ${{ steps.vars.outputs.asset_name }}
           asset_content_type: ${{ matrix.asset_content_type }}
 
