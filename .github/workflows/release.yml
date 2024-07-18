@@ -478,7 +478,7 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: ${{ github.ref }}
           body_path: ./CHANGELOG.md
-          draft: false
+          draft: true
           prerelease: false
 
       - name: Write upload_url to file
