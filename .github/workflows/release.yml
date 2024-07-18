@@ -14,7 +14,7 @@ env:
   EXTRA_NAME: 'manticore-extra'
   EXTRA_DESC: 'Manticore extra package that includes executor and columnar lib'
   COLUMNAR_NAME: 'manticore-columnar-lib'
-  COLUMNAR_VERSION: '2.3.1'
+  COLUMNAR_VERSION: '2.3.0'
   GALERA_NAME: 'manticore-galera'
   GALERA_VERSION: '3.37'
   DOCKER_CLI_EXPERIMENTAL: enabled
