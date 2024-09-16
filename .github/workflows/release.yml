@@ -504,9 +504,9 @@ jobs:
           - artifact_suffix: macos-13-x86_64
             asset_name_suffix: macos_x86_64.tar.gz
             asset_content_type: application/gzip
-          # - artifact_suffix: macos-13-arm64
-          #   asset_name_suffix: macos_arm64.tar.gz
-          #   asset_content_type: application/gzip
+          - artifact_suffix: macos-14-arm64
+            asset_name_suffix: macos_arm64.tar.gz
+            asset_content_type: application/gzip
           - artifact_suffix: dev-ubuntu-22.04-amd64
             asset_name_suffix: linux_amd64-dev.tar.gz
             asset_content_type: application/gzip
@@ -757,7 +757,7 @@ jobs:
             arch: x86_64
             delimiter: "-"
             distro: ""
-          - artifact: artifact-macos-13-arm64
+          - artifact: artifact-macos-14-arm64
             type: arc
             arch: aarch
             delimiter: "-"
