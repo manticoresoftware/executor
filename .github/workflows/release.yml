@@ -754,14 +754,14 @@ jobs:
             distro: 9
           - artifact: artifact-macos-13-x86_64
             type: arc
-            arch: noarch
+            arch: x86_64
             delimiter: "-"
             distro: ""
-          # - artifact: artifact-macos-13-arm64
-          #   type: arc
-          #   arch: noarch
-          #   delimiter: "-"
-          #   distro: ""
+          - artifact: artifact-macos-13-arm64
+            type: arc
+            arch: aarch
+            delimiter: "-"
+            distro: ""
           # manticore-extra meta package now
           - artifact: artifact-extra-deb
             type: deb
