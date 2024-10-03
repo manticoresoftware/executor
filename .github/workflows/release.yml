@@ -356,9 +356,11 @@ jobs:
       - name: Prepare packages structure
         run: |
           mkdir -p .debpkg/usr/bin
+          mkdir -p .debpkg/usr/share/manticore
           mkdir -p .rpmpkg/usr/bin
-          mkdir -p .rpmpkg/usr/share
-          cp -p extra.LICENSE .rpmpkg/usr/share/${{ env.EXTRA_NAME }}-LICENSE
+          mkdir -p .rpmpkg/usr/share/manticore
+          cp -p extra.LICENSE .debpkg/usr/share/manticore/manticore-${{ env.EXTRA_NAME }}.notice
+          cp -p extra.LICENSE .rpmpkg/usr/share/manticore/manticore-${{ env.EXTRA_NAME }}.notice
       - uses: manticoresoftware/actions-build-deb-action@master
         name: Build DEB packages
         with:
