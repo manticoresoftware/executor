@@ -8,13 +8,13 @@ on:
 env:
   APP_NAME: 'manticore-executor'
   DOCKER_TAG: 'manticoresearch/manticore-executor'
-  PHP_VERSION: '8.2.12'
+  PHP_VERSION: '8.3.4'
   MAINTAINER: 'Manticore'
   DESC: 'Custom built PHP executor for Manticore.'
   EXTRA_NAME: 'manticore-extra'
   EXTRA_DESC: 'Manticore extra package that includes executor and columnar lib'
   COLUMNAR_NAME: 'manticore-columnar-lib'
-  COLUMNAR_VERSION: '2.2.1'
+  COLUMNAR_VERSION: '2.3.1'
   GALERA_NAME: 'manticore-galera'
   GALERA_VERSION: '3.37'
   DOCKER_CLI_EXPERIMENTAL: enabled
@@ -43,28 +43,33 @@ jobs:
           echo "deb_suffix=-${date}-$commit" >> $GITHUB_OUTPUT
 
   build-artifact:
+    name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     needs:
       - vars
     strategy:
       matrix:
         include:
-          - os: ubuntu-22.04
+          - name: AMD64 with buildx for Linux
+            os: ubuntu-22.04
             arch: amd64
             use_buildx: true
             run: ""
-          - os: ubuntu-22.04
+          - name: ARM64 with buildx for Linux
+            os: ubuntu-22.04
             arch: arm64
             use_buildx: true
             run: ""
-          - os: macos-13
-            arch: amd64
+          - name: AMD64 native on OSX
+            os: macos-13
+            arch: x86_64
             use_buildx: false
             run: ./build-osx
-          # - os: macos-13-arm64
-          #   arch: arm64
-          #   use_buildx: false
-          #   run: ./build-osx
+          - name: ARM64 native on OSX
+            os: macos-14
+            arch: arm64
+            use_buildx: false
+            run: ./build-osx
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -73,7 +78,7 @@ jobs:
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
         if: ${{ matrix.use_buildx == true }}
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
       - name: Build docker image
         if: ${{ matrix.use_buildx == true }}
         uses: docker/build-push-action@v3
@@ -111,7 +116,7 @@ jobs:
         run: |
           echo "app_version=$(echo ${{ github.ref_name }} | cut -dv -f2)" >> $GITHUB_OUTPUT
       - name: Build manticore-executor-dev
-        run: ./build-linux 8.2.12 0 1
+        run: ./build-linux 8.3.4 0 1
         shell: bash
       - name: Create artifact
         run: |
@@ -268,6 +273,7 @@ jobs:
           package_root: .debpkg
           maintainer: ${{ env.MAINTAINER }}
           version: ${{ needs.vars.outputs.app_version }}${{ needs.vars.outputs.deb_suffix }}
+
           arch: 'arm64'
           desc: '${{ env.DESC }}'
           license: 'PHP-3.01'
@@ -445,6 +451,10 @@ jobs:
 
   create-release:
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+      pull-requests: write
+      repository-projects: write    
     needs:
       - build-artifact
       - build-artifact-dev
@@ -471,7 +481,7 @@ jobs:
           release_name: ${{ github.ref }}
           body_path: ./CHANGELOG.md
           draft: false
-          prerelease: false
+          prerelease: true
 
       - name: Write upload_url to file
         run: echo '${{ steps.create-release.outputs.upload_url }}' > upload_url.txt
@@ -493,12 +503,12 @@ jobs:
           - artifact_suffix: ubuntu-22.04-arm64
             asset_name_suffix: linux_arm64.tar.gz
             asset_content_type: application/gzip
-          - artifact_suffix: macos-13-amd64
-            asset_name_suffix: macos_amd64.tar.gz
+          - artifact_suffix: macos-13-x86_64
+            asset_name_suffix: macos_x86_64.tar.gz
             asset_content_type: application/gzip
-          # - artifact_suffix: macos-13-arm64
-          #   asset_name_suffix: macos_arm64.tar.gz
-          #   asset_content_type: application/gzip
+          - artifact_suffix: macos-14-arm64
+            asset_name_suffix: macos_arm64.tar.gz
+            asset_content_type: application/gzip
           - artifact_suffix: dev-ubuntu-22.04-amd64
             asset_name_suffix: linux_amd64-dev.tar.gz
             asset_content_type: application/gzip
@@ -572,8 +582,10 @@ jobs:
 
       - id: vars
         run: |
+          asset_path=$(ls ./artifacts/*.${{ matrix.pkg }} | head -n 1)
           echo "upload_url=$(cat upload_url.txt)" >> $GITHUB_OUTPUT
-          echo "asset_name=$(ls ./artifacts/*.${{ matrix.pkg }} | head -n 1)" >> $GITHUB_OUTPUT
+          echo "asset_path=$asset_path" >> $GITHUB_OUTPUT
+          echo "asset_name=$(basename $asset_path)" >> $GITHUB_OUTPUT
 
       - name: Upload Release Asset
         id: upload-release-asset
@@ -582,7 +594,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.vars.outputs.upload_url }}
-          asset_path: ${{ steps.vars.outputs.asset_name }}
+          asset_path: ${{ steps.vars.outputs.asset_path }}
           asset_name: ${{ steps.vars.outputs.asset_name }}
           asset_content_type: ${{ matrix.asset_content_type }}
 
@@ -627,8 +639,10 @@ jobs:
         shell: bash
       - id: vars
         run: |
+          asset_path=$(ls ./artifacts/*.${{ matrix.pkg }} | head -n 1)
           echo "upload_url=$(cat upload_url.txt)" >> $GITHUB_OUTPUT
-          echo "asset_name=$(ls ./artifacts/*.${{ matrix.pkg }} | head -n 1)" >> $GITHUB_OUTPUT
+          echo "asset_path=$asset_path" >> $GITHUB_OUTPUT
+          echo "asset_name=$(basename $asset_path)" >> $GITHUB_OUTPUT
 
       - name: Upload Release Asset
         id: upload-release-asset
@@ -637,7 +651,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.vars.outputs.upload_url }}
-          asset_path: ${{ steps.vars.outputs.asset_name }}
+          asset_path: ${{ steps.vars.outputs.asset_path }}
           asset_name: ${{ steps.vars.outputs.asset_name }}
           asset_content_type: ${{ matrix.asset_content_type }}
 
@@ -740,16 +754,16 @@ jobs:
             arch: aarch
             delimiter: "_"
             distro: 9
-          - artifact: artifact-macos-13-amd64
+          - artifact: artifact-macos-13-x86_64
             type: arc
-            arch: noarch
+            arch: x86_64
             delimiter: "-"
             distro: ""
-          # - artifact: artifact-macos-13-arm64
-          #   type: arc
-          #   arch: noarch
-          #   delimiter: "-"
-          #   distro: ""
+          - artifact: artifact-macos-14-arm64
+            type: arc
+            arch: aarch
+            delimiter: "-"
+            distro: ""
           # manticore-extra meta package now
           - artifact: artifact-extra-deb
             type: deb
@@ -808,15 +822,20 @@ jobs:
           delimiter: ${{ matrix.delimiter }}
 
   deploy-docker:
-    runs-on: ubuntu-22.04
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
     needs:
       - vars
       - deploy
     strategy:
       matrix:
         include:
-          - arch: amd64
-          - arch: arm64
+          - name: Deploy docker amd64
+            arch: amd64
+            os: ubuntu-22.04
+          - name: Deploy docker arm64
+            arch: arm64
+            os: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -845,28 +864,9 @@ jobs:
       - deploy
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - name: Update deps
+        uses: manticoresoftware/manticoresearch/actions/update-deps@master
         with:
-          repository: "manticoresoftware/manticoresearch"
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Update deps.txt
-        id: deps
-        run: |
-          version=${{ needs.vars.outputs.app_version }}
-          date=${{ needs.vars.outputs.app_date }}
-          commit=${{ needs.vars.outputs.app_commit }}
-
-          version_string="$version $date $commit"
-          echo "version_string=${version_string// /-}" >> $GITHUB_OUTPUT
-          sed -i '/^executor\s/c\executor '"$version_string" deps.txt
-
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
-        with:
+          name: executor
+          version: "${{ needs.vars.outputs.app_version }} ${{ needs.vars.outputs.app_date }} ${{ needs.vars.outputs.app_commit }}"
           token: ${{ secrets.PR_TOKEN }}
-          commit-message: "Bump executor version to: ${{ steps.deps.outputs.version_string }}"
-          title: "Update executor version"
-          body: "Updating executor version to ${{ steps.deps.outputs.version_string }}"
-          branch: "update-executor-version"
-          draft: false
