@@ -367,7 +367,7 @@ jobs:
           mkdir -p .rpmpkg/usr/share/manticore
           cp -p extra.notice .debpkg/usr/share/manticore/${{ env.EXTRA_NAME }}.notice
           cp -p extra.notice .rpmpkg/usr/share/manticore/${{ env.EXTRA_NAME }}.notice
-          cp -p extra.notice .rpmpkg/usr/share/${{ env.EXTRA_NAME }}-LICENSE
+          echo "" > .rpmpkg/usr/share/${{ env.EXTRA_NAME }}-LICENSE
       - uses: manticoresoftware/actions-build-deb-action@master
         name: Build DEB packages
         with:
