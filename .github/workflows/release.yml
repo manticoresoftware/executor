@@ -362,9 +362,12 @@ jobs:
       - name: Prepare packages structure
         run: |
           mkdir -p .debpkg/usr/bin
+          mkdir -p .debpkg/usr/share/manticore
           mkdir -p .rpmpkg/usr/bin
-          mkdir -p .rpmpkg/usr/share
-          cp -p extra.LICENSE .rpmpkg/usr/share/${{ env.EXTRA_NAME }}-LICENSE
+          mkdir -p .rpmpkg/usr/share/manticore
+          cp -p extra.notice .debpkg/usr/share/manticore/${{ env.EXTRA_NAME }}.notice
+          cp -p extra.notice .rpmpkg/usr/share/manticore/${{ env.EXTRA_NAME }}.notice
+          echo "" > .rpmpkg/usr/share/${{ env.EXTRA_NAME }}-LICENSE
       - uses: manticoresoftware/actions-build-deb-action@master
         name: Build DEB packages
         with:
@@ -478,8 +481,8 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: ${{ github.ref }}
           body_path: ./CHANGELOG.md
-          draft: true
-          prerelease: false
+          draft: false
+          prerelease: true
 
       - name: Write upload_url to file
         run: echo '${{ steps.create-release.outputs.upload_url }}' > upload_url.txt
@@ -504,9 +507,9 @@ jobs:
           - artifact_suffix: macos-13-x86_64
             asset_name_suffix: macos_x86_64.tar.gz
             asset_content_type: application/gzip
-          # - artifact_suffix: macos-13-arm64
-          #   asset_name_suffix: macos_arm64.tar.gz
-          #   asset_content_type: application/gzip
+          - artifact_suffix: macos-14-arm64
+            asset_name_suffix: macos_arm64.tar.gz
+            asset_content_type: application/gzip
           - artifact_suffix: dev-ubuntu-22.04-amd64
             asset_name_suffix: linux_amd64-dev.tar.gz
             asset_content_type: application/gzip
@@ -754,14 +757,14 @@ jobs:
             distro: 9
           - artifact: artifact-macos-13-x86_64
             type: arc
-            arch: noarch
+            arch: x86_64
             delimiter: "-"
             distro: ""
-          # - artifact: artifact-macos-13-arm64
-          #   type: arc
-          #   arch: noarch
-          #   delimiter: "-"
-          #   distro: ""
+          - artifact: artifact-macos-14-arm64
+            type: arc
+            arch: aarch
+            delimiter: "-"
+            distro: ""
           # manticore-extra meta package now
           - artifact: artifact-extra-deb
             type: deb
