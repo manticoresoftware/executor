@@ -5,7 +5,7 @@ ARG BUILD_DEV=0
 COPY . /src
 RUN apk add bash && \
   cd /src && \
-  ./build-alpine 8.2.8 0 $BUILD_DEV && \
+  ./build-alpine 8.3.13 0 $BUILD_DEV && \
   mv build/dist/bin/php /usr/bin/manticore-executor && \
   ln -s /usr/bin/manticore-executor /usr/bin/php && \
   cd ../..
