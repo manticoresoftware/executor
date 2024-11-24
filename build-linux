@@ -45,6 +45,7 @@ ENABLE_STATIC=yes
   --enable-ds \
   --enable-swoole \
   --with-rdkafka \
+	--enable-jchash \
   --with-openssl --with-zlib --with-zip \
   --enable-filter \
   --with-curl \

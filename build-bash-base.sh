@@ -12,6 +12,7 @@ ZSTD_REV="2dfcd6524ccdcef6dfdaa97d7f3716b866885093"
 DS_REV="d42750d69beb684ec3ef7b3da48fba769ce57ffc"
 SWOOLE_REV="2dcfef90b3dbcfc08783747ea9abf6ebaf7eedb8"
 RDKAFKA_REV="bcd5004f461d1d3a5f879bb21280bdde6f6800c2"
+JCHASH_REV="8ed50cc8c211effe1c214eae1e3240622e0f11b0"
 SKIP_SYSTEM_DEPS="$2"
 BUILD_DEV="$3"
 BUILD_STATIC=1 # Always build static but dev
@@ -58,6 +59,10 @@ cd ..
 git clone https://github.com/arnaud-lb/php-rdkafka.git
 mv php-rdkafka rdkafka
 cd rdkafka && git checkout "$RDKAFKA_REV"
+cd ..
+
+git clone https://github.com/c9s/jchash.git
+cd jchash && git checkout "$JCHASH_REV"
 cd ..
 
 cd ..
