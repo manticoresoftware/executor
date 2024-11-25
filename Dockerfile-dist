@@ -6,7 +6,7 @@ RUN apt-get update -y && \
 COPY ./build-linux ./build-linux
 COPY ./build-bash-base.sh ./build-bash-base.sh
 COPY ./helper.sh ./helper.sh
-RUN ./build-linux 8.2.16 0 0 && \
+RUN ./build-linux 8.3.13 0 0 && \
   cp build/dist/bin/php /usr/bin/manticore-executor && \
   rm -fr build
 
