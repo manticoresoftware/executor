@@ -98,6 +98,10 @@ chmod +x configure
   --with-curl \
   --enable-opcache \
   --enable-mbstring \
+  --enable-shmop \
+  --enable-sysvsem \
+	--with-mysqli \
+	--enable-mysqlnd \
   "${BUILD_EXTRA[@]}"
 make LDFLAGS=$MAKE_LDFLAGS -j8
 make install-cli
