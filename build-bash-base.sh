@@ -88,8 +88,6 @@ if [[ "$BUILD_DEV" == "1" ]]; then
     # "--enable-memprof"
     # "--enable-memprof-debug"
     "--enable-tideways-xhprof"
-    "--with-mysqli"
-    "--enable-mysqlnd"
     # "--enable-xdebug"
   )
 fi

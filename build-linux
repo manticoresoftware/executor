@@ -50,6 +50,8 @@ ENABLE_STATIC=yes
   --enable-filter \
   --with-curl \
   --enable-mbstring \
+	--with-mysqli \
+	--enable-mysqlnd \
   "${BUILD_EXTRA[@]}"
 
 make -j8

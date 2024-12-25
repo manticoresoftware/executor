@@ -64,6 +64,8 @@ ENABLE_STATIC=yes
   --enable-filter \
   --with-curl \
   --enable-mbstring \
+	--with-mysqli \
+	--enable-mysqlnd \
   "${BUILD_EXTRA[@]}"
 
 fix_static_linking
