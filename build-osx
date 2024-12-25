@@ -98,6 +98,7 @@ chmod +x configure
   --with-curl \
   --enable-opcache \
   --enable-mbstring \
+  --enable-shmop \
 	--with-mysqli \
 	--enable-mysqlnd \
   "${BUILD_EXTRA[@]}"

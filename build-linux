@@ -50,6 +50,7 @@ ENABLE_STATIC=yes
   --enable-filter \
   --with-curl \
   --enable-mbstring \
+  --enable-shmop \
 	--with-mysqli \
 	--enable-mysqlnd \
   "${BUILD_EXTRA[@]}"
