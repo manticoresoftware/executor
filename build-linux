@@ -51,6 +51,7 @@ ENABLE_STATIC=yes
   --with-curl \
   --enable-mbstring \
   --enable-shmop \
+  --enable-sysvsem \
 	--with-mysqli \
 	--enable-mysqlnd \
   "${BUILD_EXTRA[@]}"
