@@ -17,6 +17,8 @@ env:
   COLUMNAR_VERSION: '2.3.1'
   GALERA_NAME: 'manticore-galera'
   GALERA_VERSION: '3.37'
+  LOAD_NAME: 'manticore-load'
+  LOAD_VERSION: '1.0.1'
   DOCKER_CLI_EXPERIMENTAL: enabled
 
 jobs:
@@ -378,7 +380,7 @@ jobs:
           arch: 'all'
           desc: '${{ env.EXTRA_DESC }}'
           license: 'Apache-2.0'
-          depends: '${{ env.APP_NAME }} (>= ${{ needs.vars.outputs.app_version }}), ${{ env.COLUMNAR_NAME }} (>= ${{ env.COLUMNAR_VERSION }}), ${{ env.GALERA_NAME }} (>= ${{ env.GALERA_VERSION }}), ca-certificates'
+          depends: '${{ env.APP_NAME }} (>= ${{ needs.vars.outputs.app_version }}), ${{ env.COLUMNAR_NAME }} (>= ${{ env.COLUMNAR_VERSION }}), ${{ env.GALERA_NAME }} (>= ${{ env.GALERA_VERSION }}), ${{ env.LOAD_NAME }} (>= ${{ env.LOAD_VERSION }}), ca-certificates'
       - name: Build RPM packages
         run: |
           sudo apt-get update -y -q
@@ -455,7 +457,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-      repository-projects: write    
+      repository-projects: write
     needs:
       - build-artifact
       - build-artifact-dev

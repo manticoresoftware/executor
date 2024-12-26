@@ -9,6 +9,7 @@ Vendor: {{ MAINTAINER }}
 Requires: {{ EXECUTOR_NAME }} >= {{ EXECUTOR_VERSION }}
 Requires: {{ COLUMNAR_NAME }} >= {{ COLUMNAR_VERSION }}
 Requires: {{ GALERA_NAME }} >= {{ GALERA_VERSION }}
+Requires: {{ LOAD_NAME }} >= {{ LOAD_VERSION }}
 Requires: ca-certificates
 
 Source: tmp.tar.gz
