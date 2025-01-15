@@ -64,9 +64,10 @@ build_dev_conf() {
 	git checkout 68eb143bd5700a6fe041826118aeb9a13a3fcef3
 	cd ..
 
-	git clone https://github.com/tideways/php-xhprof-extension.git tideways_xhprof && cd "$_"
-	git checkout 6ee298f910a3661960f454bd6a787686657c7570
-	cd ..
+	# It does not work with PHP 8.4.2
+	# git clone https://github.com/tideways/php-xhprof-extension.git tideways_xhprof && cd "$_"
+	# git checkout 7877082945fcccced12676749676af1736a00f65
+	# cd ..
 
 	# Still not working due to zend
 	# git clone https://github.com/donhardman/xdebug.git xdebug && cd "$_"
