@@ -101,7 +101,9 @@ if [[ "$BUILD_DEV" == "1" ]]; then
     "--enable-debug"
     # "--enable-memprof"
     # "--enable-memprof-debug"
-    "--enable-tideways-xhprof"
+		#
+		# It does not work with PHP 8.4.2
+    # "--enable-tideways-xhprof"
     # "--enable-xdebug"
   )
 fi
