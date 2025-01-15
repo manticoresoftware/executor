@@ -9,10 +9,11 @@ set -e
 
 PHP_VERSION="$1"
 ZSTD_REV="2dfcd6524ccdcef6dfdaa97d7f3716b866885093"
-DS_REV="d42750d69beb684ec3ef7b3da48fba769ce57ffc"
-SWOOLE_REV="2dcfef90b3dbcfc08783747ea9abf6ebaf7eedb8"
-RDKAFKA_REV="bcd5004f461d1d3a5f879bb21280bdde6f6800c2"
+DS_REV="da4d2f2a2c0f3732b34562636849c5e52e79e6c3"
+SWOOLE_REV="3e1a1f89930ba0bbea1f5ee31bcd0ee701a87aab"
+RDKAFKA_REV="53398031f1cd96e437e9705b67b4dc19d955acb6"
 JCHASH_REV="8ed50cc8c211effe1c214eae1e3240622e0f11b0"
+SIMDJSON_REV="9a2745669fea733a40f9443b1a793846d0759b89"
 SKIP_SYSTEM_DEPS="$2"
 BUILD_DEV="$3"
 BUILD_STATIC=1 # Always build static but dev
@@ -63,6 +64,19 @@ cd ..
 
 git clone https://github.com/c9s/jchash.git
 cd jchash && git checkout "$JCHASH_REV"
+cd ..
+
+git clone https://github.com/crazyxman/simdjson_php.git
+mv simdjson_php simdjson
+cd simdjson && git checkout "$SIMDJSON_REV"
+# Clean up php version ncheck that fails when we build without phpize
+if [ "$(uname)" == "Darwin" ]; then
+	# macOS (OSX)
+	sed -i '' '9,24d' config.m4
+else
+	# Linux
+	sed -i '9,24d' config.m4
+fi
 cd ..
 
 cd ..
