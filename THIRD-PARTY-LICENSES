@@ -1,0 +1,57 @@
+manticore-executor includes third-party components licensed under MIT and Apache 2.0. Below is a list of these components along with their respective licenses.
+
+For the full license of manticore-executor itself, see the `LICENSE` file (PHP License 3.01).
+
+---
+
+1. ZSTD  
+   License: MIT  
+   Source: https://github.com/kjdev/php-ext-zstd  
+   
+   <Insert full MIT license text here>
+   
+
+---
+
+2. DS (Data Structures for PHP 7)  
+   License: MIT  
+   Source: https://github.com/php-ds/ext-ds  
+   
+   <Insert full MIT license text here>
+
+---
+
+3. SWOOLE  
+   License: Apache 2.0  
+   Source: https://github.com/swoole/swoole-src  
+   
+   <Insert full Apache 2.0 license text here> 
+
+   Note: If SWOOLE includes a NOTICE file, add its content here.
+
+---
+
+4. RDKAFKA  
+   License: MIT  
+   Source: https://github.com/edenhill/php-rdkafka  
+   
+   <Insert full MIT license text here>
+   
+
+---
+
+5. JCHASH  
+   License: MIT  
+   Source: https://github.com/xyz/jchash  
+   
+   <Insert full MIT license text here>
+
+---
+
+6. SIMDJSON_REV  
+   License: Apache 2.0  
+   Source: https://github.com/lemire/simdjson  
+   
+   <Insert full Apache 2.0 license text here>  
+
+   Note: If SIMDJSON_REV includes a NOTICE file, add its content here.
