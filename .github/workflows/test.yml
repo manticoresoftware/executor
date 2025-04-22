@@ -35,7 +35,7 @@ jobs:
             script_name: ./build-osx
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ilammy/msvc-dev-cmd@v1.11.0
         with:
           uwp: true
