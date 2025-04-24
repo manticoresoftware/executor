@@ -161,10 +161,11 @@ jobs:
           mkdir -p .rpmpkg/usr/share/
           cp -p *_linux_amd64/${{ env.APP_NAME }} .debpkg/usr/bin/${{ env.APP_NAME }}
           chmod +x .debpkg/usr/bin/${{ env.APP_NAME }}
-          # cp -p README.md .debpkg/README.md
-          # cp -p LICENSE .debpkg/LICENSE
+          cp -p LICENSE .debpkg/usr/share/${{ env.APP_NAME }}-LICENSE
+          cp -p THIRD-PARTY-LICENSES .debpkg/usr/share/${{ env.APP_NAME }}-THIRD-PARTY-LICENSES
           cp -p *_linux_amd64/${{ env.APP_NAME }} .rpmpkg/usr/bin/${{ env.APP_NAME }}
           cp -p LICENSE .rpmpkg/usr/share/${{ env.APP_NAME }}-LICENSE
+          cp -p THIRD-PARTY-LICENSES .rpmpkg/usr/share/${{ env.APP_NAME }}-THIRD-PARTY-LICENSES
           cp -p README.md .rpmpkg/usr/share/${{ env.APP_NAME }}-README.md
       - uses: manticoresoftware/actions-build-deb-action@master
         with:
@@ -267,7 +268,10 @@ jobs:
 
           cp -p *_linux_arm64/${{ env.APP_NAME }} .debpkg/usr/bin/${{ env.APP_NAME }}
           cp -p *_linux_arm64/${{ env.APP_NAME }} .rpmpkg/usr/bin/${{ env.APP_NAME }}
+          cp -p LICENSE .debpkg/usr/share/${{ env.APP_NAME }}-LICENSE
+          cp -p THIRD-PARTY-LICENSES .debpkg/usr/share/${{ env.APP_NAME }}-THIRD-PARTY-LICENSES
           cp -p LICENSE .rpmpkg/usr/share/${{ env.APP_NAME }}-LICENSE
+          cp -p THIRD-PARTY-LICENSES .rpmpkg/usr/share/${{ env.APP_NAME }}-THIRD-PARTY-LICENSES
           cp -p README.md .rpmpkg/usr/share/${{ env.APP_NAME }}-README.md
       - uses: manticoresoftware/actions-build-deb-action@master
         with:
