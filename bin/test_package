@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+image=$1
+file=$2
+
+container=test-package
+docker create --name $container --entrypoint sh -it "$image"
+docker start $container
+docker cp "$file" $container:"/$file"
+
+if [[ $file =~ deb$ ]]; then
+  docker exec $container 'apt-get update && apt-get install -y bash'
+  docker cp bin/test_deb $container:/
+  docker exec $container "/test_deb /$file"
+else
+  docker exec 'yum update && yum install -y bash'
+  docker cp bin/test_rpm $container:/
+  docker exec $container "/test_rpm /$file"
+fi
+
+docker rm -f $container
+
