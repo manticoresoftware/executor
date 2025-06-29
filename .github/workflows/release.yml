@@ -215,7 +215,8 @@ jobs:
           rpm_path="./${{ env.APP_NAME }}-${version}-1.x86_64.rpm"
           cp $rpm_path "./${{ env.APP_NAME }}-${version}-1.el7.x86_64.rpm"
           cp $rpm_path "./${{ env.APP_NAME }}-${version}-1.el8.x86_64.rpm"
-          mv $rpm_path "./${{ env.APP_NAME }}-${version}-1.el9.x86_64.rpm"
+          cp $rpm_path "./${{ env.APP_NAME }}-${version}-1.el9.x86_64.rpm"
+          mv $rpm_path "./${{ env.APP_NAME }}-${version}-1.el10.x86_64.rpm"
           mkdir -p ./artifacts
           mv *.deb ./artifacts/
           mv *.rpm ./artifacts/
@@ -241,6 +242,12 @@ jobs:
         with:
           name: artifact-rpm-el9-amd64
           path: ./artifacts/*.el9.*.rpm
+
+      - uses: manticoresoftware/upload_artifact_with_retries@main
+        with:
+          name: artifact-rpm-el10-amd64
+          path: ./artifacts/*.el10.*.rpm
+
   build-linux-packages-arm64:
     needs:
       - vars
@@ -343,6 +350,7 @@ jobs:
           rpm_path="./artifacts/${{ env.APP_NAME }}-${version}-1.el7.aarch64.rpm"
           cp $rpm_path "./artifacts/${{ env.APP_NAME }}-${version}-1.el8.aarch64.rpm"
           cp $rpm_path "./artifacts/${{ env.APP_NAME }}-${version}-1.el9.aarch64.rpm"
+          cp $rpm_path "./artifacts/${{ env.APP_NAME }}-${version}-1.el10.aarch64.rpm"
 
       - uses: manticoresoftware/upload_artifact_with_retries@main
         with:
@@ -358,6 +366,11 @@ jobs:
         with:
           name: artifact-rpm-el9-aarch64
           path: ./artifacts/*.el9.*.rpm
+
+      - uses: manticoresoftware/upload_artifact_with_retries@main
+        with:
+          name: artifact-rpm-el10-aarch64
+          path: ./artifacts/*.el10.*.rpm
 
   build-extra-packages:
     runs-on: ubuntu-22.04
@@ -430,7 +443,8 @@ jobs:
           rpm_path="./${{ env.EXTRA_NAME }}-${version}-1.noarch.rpm"
           cp $rpm_path "./${{ env.EXTRA_NAME }}-${version}-1.el7.noarch.rpm"
           cp $rpm_path "./${{ env.EXTRA_NAME }}-${version}-1.el8.noarch.rpm"
-          mv $rpm_path "./${{ env.EXTRA_NAME }}-${version}-1.el9.noarch.rpm"
+          cp $rpm_path "./${{ env.EXTRA_NAME }}-${version}-1.el9.noarch.rpm"
+          mv $rpm_path "./${{ env.EXTRA_NAME }}-${version}-1.el10.noarch.rpm"
 
           mkdir -p ./artifacts
           mv *.deb ./artifacts/
@@ -457,6 +471,11 @@ jobs:
         with:
           name: artifact-extra-rpm-el9
           path: ./artifacts/*.el9.noarch.rpm
+
+      - uses: manticoresoftware/upload_artifact_with_retries@main
+        with:
+          name: artifact-extra-rpm-el10
+          path: ./artifacts/*.el10.noarch.rpm
 
   create-release:
     runs-on: ubuntu-22.04
@@ -570,6 +589,9 @@ jobs:
             suffix: "el9-amd64"
             asset_content_type: application/x-rpm
           - pkg: rpm
+            suffix: "el10-amd64"
+            asset_content_type: application/x-rpm
+          - pkg: rpm
             suffix: "el7-aarch64"
             asset_content_type: application/x-rpm
           - pkg: rpm
@@ -577,6 +599,9 @@ jobs:
             asset_content_type: application/x-rpm
           - pkg: rpm
             suffix: "el9-aarch64"
+            asset_content_type: application/x-rpm
+          - pkg: rpm
+            suffix: "el10-aarch64"
             asset_content_type: application/x-rpm
     steps:
       - uses: manticoresoftware/download_artifact_with_retries@main
@@ -624,6 +649,9 @@ jobs:
             asset_content_type: application/x-rpm
           - pkg: rpm
             suffix: "-el9"
+            asset_content_type: application/x-rpm
+          - pkg: rpm
+            suffix: "-el10"
             asset_content_type: application/x-rpm
     steps:
       # We download amd64 only but just because of noarch
@@ -763,6 +791,16 @@ jobs:
             arch: aarch
             delimiter: "_"
             distro: 9
+          - artifact: artifact-rpm-el10-amd64
+            type: rpm
+            arch: x86_64
+            delimiter: "_"
+            distro: 10
+          - artifact: artifact-rpm-el10-aarch64
+            type: rpm
+            arch: aarch
+            delimiter: "_"
+            distro: 10
           - artifact: artifact-macos-13-x86_64
             type: arc
             arch: x86_64
@@ -819,6 +857,11 @@ jobs:
             arch: noarch
             delimiter: "_"
             distro: 9
+          - artifact: artifact-extra-rpm-el10
+            type: rpm
+            arch: noarch
+            delimiter: "_"
+            distro: 10
     steps:
       - name: Deploy package
         uses: manticoresoftware/publish_to_repo@main
