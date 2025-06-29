@@ -157,6 +157,7 @@ jobs:
           cp -p packages/postrun .debpkg/DEBIAN/postinst
 
           mkdir -p .debpkg/usr/bin
+          mkdir -p .debpkg/usr/share/
           mkdir -p .rpmpkg/usr/bin
           mkdir -p .rpmpkg/usr/share/
           cp -p *_linux_amd64/${{ env.APP_NAME }} .debpkg/usr/bin/${{ env.APP_NAME }}
