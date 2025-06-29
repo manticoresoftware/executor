@@ -271,6 +271,7 @@ jobs:
           cp -p packages/postrun .debpkg/DEBIAN/postinst
 
           mkdir -p .debpkg/usr/bin
+          mkdir -p .debpkg/usr/share/
           mkdir -p .rpmpkg/usr/bin
           mkdir -p .rpmpkg/usr/share
 
