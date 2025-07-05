@@ -2,9 +2,14 @@ name: release
 
 on:
   push:
+    branches:
+      - main
     tags:
-      - 'v*.*.*'
-
+      - 'release-*'
+  pull_request:
+    branches: [ main ]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  
 env:
   APP_NAME: 'manticore-executor'
   DOCKER_TAG: 'manticoresearch/manticore-executor'
@@ -14,41 +19,76 @@ env:
   EXTRA_NAME: 'manticore-extra'
   EXTRA_DESC: 'Manticore extra package that includes executor and columnar lib'
   COLUMNAR_NAME: 'manticore-columnar-lib'
-  COLUMNAR_VERSION: '2.3.1'
+  COLUMNAR_VERSION: '8.0.0'
   GALERA_NAME: 'manticore-galera'
   GALERA_VERSION: '3.37'
   LOAD_NAME: 'manticore-load'
-  LOAD_VERSION: '1.0.1'
+  LOAD_VERSION: '1.18.2'
   DOCKER_CLI_EXPERIMENTAL: enabled
 
 jobs:
-  vars:
+  pack:
+    name: OK to pack?
     runs-on: ubuntu-22.04
     outputs:
-      app_version: ${{ steps.vars.outputs.app_version }}
-      app_date: ${{ steps.vars.outputs.app_date }}
-      app_commit: ${{ steps.vars.outputs.app_commit }}
-      rpm_suffix: ${{ steps.vars.outputs.rpm_suffix }}
-      deb_suffix: ${{ steps.vars.outputs.deb_suffix }}
-
+      version: ${{ steps.semver-tagger.outputs.version }}
+      version_full: ${{ steps.semver-tagger.outputs.version_full }}
+      version_rpm: ${{ steps.semver-tagger.outputs.version_rpm }}
+      version_deb: ${{ steps.semver-tagger.outputs.version_deb }}
+      target: ${{ steps.semver-tagger.outputs.target }}
+      should_continue: ${{ steps.check-should-continue.outputs.should_continue }}
+    if: |
+      (github.event_name == 'pull_request' && (contains(github.event.pull_request.labels.*.name, 'pack') || contains(github.event.pull_request.labels.*.name, 'publish')))
+      || ( github.event_name == 'push' && ( github.ref == 'refs/heads/main' || startsWith( github.ref, 'refs/tags/release-' ) || contains( github.ref, 'refs/tags/pack_publish' ) ) )
     steps:
-      - uses: actions/checkout@v3
-      - id: vars
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update version
+        id: semver-tagger
+        uses: manticoresoftware/semver-tagger-action@main  
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          conventional_commits_authors: alexey@manticoresearch.com
+          ignore_patterns: '\.md$|^test/|^manual/|\.clt|\.github|\.patterns|\.yml|\.gitignore'
+          debug: true
+      - name: Check if we should continue packing
+        id: check-should-continue
         run: |
-          date=$( date +%y%m%d%H )
-          commit=${GITHUB_SHA:0:7}
-
-          echo "app_version=$(echo ${{ github.ref_name }} | cut -dv -f2)" >> $GITHUB_OUTPUT
-          echo "app_date=$date" >> $GITHUB_OUTPUT
-          echo "app_commit=$commit" >> $GITHUB_OUTPUT
-          echo "rpm_suffix=_${date}.$commit" >> $GITHUB_OUTPUT
-          echo "deb_suffix=-${date}-$commit" >> $GITHUB_OUTPUT
+          # Continue if version was updated, if we have the "pack" label on PR, or if target is "release"
+          if [[ "${{ steps.semver-tagger.outputs.version_updated }}" == "true" ]]; then
+            echo "Continuing because version was updated"
+            echo "should_continue=true" >> $GITHUB_OUTPUT
+          elif [[ "${{ steps.semver-tagger.outputs.target }}" == "release" ]]; then
+            echo "Continuing because target is release"
+            echo "should_continue=true" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.event_name }}" == "pull_request" && "${{ contains(github.event.pull_request.labels.*.name, 'pack') }}" == "true" ]]; then
+            echo "Continuing because PR has 'pack' label"
+            echo "should_continue=true" >> $GITHUB_OUTPUT
+          elif [[ "${{ contains(github.ref, 'refs/tags/pack_publish') }}" == "true" ]]; then
+            echo "Continuing because commit has 'pack_publish' tag"
+            echo "should_continue=true" >> $GITHUB_OUTPUT
+          else
+            echo "Skipping packing because version wasn't updated, target is not release, and there's no 'pack' label or tag"
+            echo "should_continue=false" >> $GITHUB_OUTPUT
+          fi
+      - run: |
+          echo "# Packing and publishing all for commit ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "* Commit URL: [${{ github.sha }}](/${{ github.repository }}/commit/${{ github.sha }})" >> $GITHUB_STEP_SUMMARY
+          echo "* Initiated by: [@${{ github.actor }}](https://github.com/${{ github.actor }})" >> $GITHUB_STEP_SUMMARY
+          echo "* Ref: ${{ github.ref_type }} \"${{ github.ref_name }}\"" >> $GITHUB_STEP_SUMMARY
+          echo "* Attempt: ${{ github.run_attempt }}" >> $GITHUB_STEP_SUMMARY
+          echo "* Version updated: ${{ steps.semver-tagger.outputs.version_updated }}" >> $GITHUB_STEP_SUMMARY
+          echo "* Should continue packing: ${{ steps.check-should-continue.outputs.should_continue }}" >> $GITHUB_STEP_SUMMARY
 
   build-artifact:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     needs:
-      - vars
+      - pack
+    if: needs.pack.outputs.should_continue == 'true'
     strategy:
       matrix:
         include:
@@ -89,17 +129,16 @@ jobs:
           platforms: linux/${{ matrix.arch }}
           load: true
           push: false
-          tags: ${{ env.DOCKER_TAG }}:${{ needs.vars.outputs.app_version }}
+          tags: ${{ env.DOCKER_TAG }}:${{ needs.pack.outputs.version }}
           build-args: BUILD_DEV=0
       - name: Create artifact
         run: |
           [ -n "${{ matrix.run }}" ] && ${{ matrix.run }} ${{ env.PHP_VERSION }} || true
           APP_ARCH=${{ matrix.arch }} \
-            APP_VERSION=${{ needs.vars.outputs.app_version }} \
+            APP_VERSION=${{ needs.pack.outputs.version }} \
             APP_NAME=${{ env.APP_NAME }} \
-            APP_DATE=${{ needs.vars.outputs.app_date }} \
             RUNNER_OS="${{ runner.os }}" \
-            DOCKER_IMAGE=${{ env.DOCKER_TAG }}:${{ needs.vars.outputs.app_version }} \
+            DOCKER_IMAGE=${{ env.DOCKER_TAG }}:${{ needs.pack.outputs.version }} \
             ./collect-assets
         shell: bash
       - uses: manticoresoftware/upload_artifact_with_retries@main
@@ -110,7 +149,8 @@ jobs:
   build-artifact-dev:
     runs-on: ubuntu-22.04
     needs:
-      - vars
+      - pack
+    if: needs.pack.outputs.should_continue == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -123,9 +163,8 @@ jobs:
       - name: Create artifact
         run: |
           APP_ARCH=amd64 \
-            APP_VERSION=${{ needs.vars.outputs.app_version }} \
+            APP_VERSION=${{ needs.pack.outputs.version_full }} \
             APP_NAME=${{ env.APP_NAME }} \
-            APP_DATE=${{ needs.vars.outputs.app_date }} \
             RUNNER_OS="${{ runner.os }}" \
             ASSET_SUFFIX=-dev \
             ./collect-assets
@@ -137,7 +176,7 @@ jobs:
 
   build-linux-packages:
     needs:
-      - vars
+      - pack
       - build-artifact
     runs-on: ubuntu-22.04
     steps:
@@ -157,23 +196,21 @@ jobs:
           cp -p packages/postrun .debpkg/DEBIAN/postinst
 
           mkdir -p .debpkg/usr/bin
-          mkdir -p .debpkg/usr/share/
           mkdir -p .rpmpkg/usr/bin
           mkdir -p .rpmpkg/usr/share/
           cp -p *_linux_amd64/${{ env.APP_NAME }} .debpkg/usr/bin/${{ env.APP_NAME }}
           chmod +x .debpkg/usr/bin/${{ env.APP_NAME }}
-          cp -p LICENSE .debpkg/usr/share/${{ env.APP_NAME }}-LICENSE
-          cp -p THIRD-PARTY-LICENSES .debpkg/usr/share/${{ env.APP_NAME }}-THIRD-PARTY-LICENSES
+          # cp -p README.md .debpkg/README.md
+          # cp -p LICENSE .debpkg/LICENSE
           cp -p *_linux_amd64/${{ env.APP_NAME }} .rpmpkg/usr/bin/${{ env.APP_NAME }}
           cp -p LICENSE .rpmpkg/usr/share/${{ env.APP_NAME }}-LICENSE
-          cp -p THIRD-PARTY-LICENSES .rpmpkg/usr/share/${{ env.APP_NAME }}-THIRD-PARTY-LICENSES
           cp -p README.md .rpmpkg/usr/share/${{ env.APP_NAME }}-README.md
       - uses: manticoresoftware/actions-build-deb-action@master
         with:
           package: ${{ env.APP_NAME }}
           package_root: .debpkg
           maintainer: ${{ env.MAINTAINER }}
-          version: ${{ needs.vars.outputs.app_version }}${{ needs.vars.outputs.deb_suffix }}
+          version: ${{ needs.pack.outputs.version_deb }}
           arch: 'amd64'
           desc: '${{ env.DESC }}'
           license: 'PHP-3.01'
@@ -196,7 +233,7 @@ jobs:
 
           # Prepare spec file for RPM
           sed -i 's/{{ NAME }}/${{ env.APP_NAME }}/g' $spec_file
-          sed -i 's/{{ VERSION }}/${{ needs.vars.outputs.app_version }}${{ needs.vars.outputs.rpm_suffix }}/g' $spec_file
+          sed -i 's/{{ VERSION }}/${{ needs.pack.outputs.version_rpm }}/g' $spec_file
           sed -i 's/{{ MAINTAINER }}/${{ env.MAINTAINER }}/g' $spec_file
           sed -i 's/{{ DESC }}/${{ env.DESC }}/g' $spec_file
           sed -i 's/{{ ARCH }}/x86_64/g' $spec_file
@@ -212,9 +249,8 @@ jobs:
           cp -p "$RPMBUILD_DIR/RPMS/x86_64"/*.rpm $GITHUB_WORKSPACE
       - name: Rename packages to proper name
         run: |
-          version=${{ needs.vars.outputs.app_version }}${{ needs.vars.outputs.rpm_suffix }}
+          version=${{ needs.pack.outputs.version_rpm }}
           rpm_path="./${{ env.APP_NAME }}-${version}-1.x86_64.rpm"
-          cp $rpm_path "./${{ env.APP_NAME }}-${version}-1.el7.x86_64.rpm"
           cp $rpm_path "./${{ env.APP_NAME }}-${version}-1.el8.x86_64.rpm"
           cp $rpm_path "./${{ env.APP_NAME }}-${version}-1.el9.x86_64.rpm"
           mv $rpm_path "./${{ env.APP_NAME }}-${version}-1.el10.x86_64.rpm"
@@ -228,11 +264,6 @@ jobs:
         with:
           name: artifact-deb-amd64
           path: ./artifacts/*.deb
-
-      - uses: manticoresoftware/upload_artifact_with_retries@main
-        with:
-          name: artifact-rpm-el7-amd64
-          path: ./artifacts/*.el7.*.rpm
 
       - uses: manticoresoftware/upload_artifact_with_retries@main
         with:
@@ -251,7 +282,7 @@ jobs:
 
   build-linux-packages-arm64:
     needs:
-      - vars
+      - pack
       - build-artifact
     runs-on: ubuntu-22.04
     steps:
@@ -276,17 +307,14 @@ jobs:
 
           cp -p *_linux_arm64/${{ env.APP_NAME }} .debpkg/usr/bin/${{ env.APP_NAME }}
           cp -p *_linux_arm64/${{ env.APP_NAME }} .rpmpkg/usr/bin/${{ env.APP_NAME }}
-          cp -p LICENSE .debpkg/usr/share/${{ env.APP_NAME }}-LICENSE
-          cp -p THIRD-PARTY-LICENSES .debpkg/usr/share/${{ env.APP_NAME }}-THIRD-PARTY-LICENSES
           cp -p LICENSE .rpmpkg/usr/share/${{ env.APP_NAME }}-LICENSE
-          cp -p THIRD-PARTY-LICENSES .rpmpkg/usr/share/${{ env.APP_NAME }}-THIRD-PARTY-LICENSES
           cp -p README.md .rpmpkg/usr/share/${{ env.APP_NAME }}-README.md
       - uses: manticoresoftware/actions-build-deb-action@master
         with:
           package: ${{ env.APP_NAME }}
           package_root: .debpkg
           maintainer: ${{ env.MAINTAINER }}
-          version: ${{ needs.vars.outputs.app_version }}${{ needs.vars.outputs.deb_suffix }}
+          version: ${{ needs.pack.outputs.version_deb }}
 
           arch: 'arm64'
           desc: '${{ env.DESC }}'
@@ -302,11 +330,14 @@ jobs:
         with:
           name: artifact-deb-arm64
           path: ./artifacts/*.deb
+      - name: Cleanup the artifacts directory
+        run: |
+          rm -fr ./artifacts/*
       - uses: manticoresoftware/actions-run-on-arch-action@master
-        name: Preparing EL7 RPM package
+        name: Preparing EL8 RPM package
         with:
           arch: aarch64
-          distro: centos7
+          distro: centos8
           githubToken: ${{ github.token }}
           setup: |
             mkdir -p "${PWD}/artifacts/packages"
@@ -314,6 +345,11 @@ jobs:
           dockerRunArgs: |
             --volume "${PWD}/artifacts:/artifacts"
           install: |
+            cd /etc/yum.repos.d
+            sed -i 's|mirrorlist=|#mirrorlist=|g' *.repo
+            sed -i 's|#baseurl=|baseurl=|g' *.repo
+            sed -i 's|http://mirror.centos.org|http://vault.centos.org|g' *.repo
+            yum clean all
             yum install -y sudo git kernel-devel kernel-headers
             yum groupinstall -y "Development Tools"
           run: |
@@ -329,7 +365,7 @@ jobs:
 
             # Prepare spec file for RPM
             sed -i 's/{{ NAME }}/${{ env.APP_NAME }}/g' $spec_file
-            sed -i 's/{{ VERSION }}/${{ needs.vars.outputs.app_version }}${{ needs.vars.outputs.rpm_suffix }}/g' $spec_file
+            sed -i 's/{{ VERSION }}/${{ needs.pack.outputs.version_rpm }}/g' $spec_file
             sed -i 's/{{ MAINTAINER }}/${{ env.MAINTAINER }}/g' $spec_file
             sed -i 's/{{ DESC }}/${{ env.DESC }}/g' $spec_file
             sed -i 's/{{ ARCH }}/aarch64/g' $spec_file
@@ -347,16 +383,10 @@ jobs:
       - name: Rename package to proper name
         run: |
           ls -lah ./artifacts/*.rpm
-          version=${{ needs.vars.outputs.app_version }}${{ needs.vars.outputs.rpm_suffix }}
-          rpm_path="./artifacts/${{ env.APP_NAME }}-${version}-1.el7.aarch64.rpm"
-          cp $rpm_path "./artifacts/${{ env.APP_NAME }}-${version}-1.el8.aarch64.rpm"
+          version=${{ needs.pack.outputs.version_rpm }}
+          rpm_path="./artifacts/${{ env.APP_NAME }}-${version}-1.el8.aarch64.rpm"
           cp $rpm_path "./artifacts/${{ env.APP_NAME }}-${version}-1.el9.aarch64.rpm"
           cp $rpm_path "./artifacts/${{ env.APP_NAME }}-${version}-1.el10.aarch64.rpm"
-
-      - uses: manticoresoftware/upload_artifact_with_retries@main
-        with:
-          name: artifact-rpm-el7-aarch64
-          path: ./artifacts/*.el7.*.rpm
 
       - uses: manticoresoftware/upload_artifact_with_retries@main
         with:
@@ -376,7 +406,8 @@ jobs:
   build-extra-packages:
     runs-on: ubuntu-22.04
     needs:
-      - vars
+      - pack
+    if: needs.pack.outputs.should_continue == 'true'
     steps:
       - uses: actions/checkout@v3
       - name: Prepare packages structure
@@ -394,11 +425,11 @@ jobs:
           package: ${{ env.EXTRA_NAME }}
           package_root: .debpkg
           maintainer: ${{ env.MAINTAINER }}
-          version: ${{ needs.vars.outputs.app_version }}${{ needs.vars.outputs.deb_suffix }}
+          version: ${{ needs.pack.outputs.version_deb }}
           arch: 'all'
           desc: '${{ env.EXTRA_DESC }}'
           license: 'Apache-2.0'
-          depends: '${{ env.APP_NAME }} (>= ${{ needs.vars.outputs.app_version }}), ${{ env.COLUMNAR_NAME }} (>= ${{ env.COLUMNAR_VERSION }}), ${{ env.GALERA_NAME }} (>= ${{ env.GALERA_VERSION }}), ${{ env.LOAD_NAME }} (>= ${{ env.LOAD_VERSION }}), ca-certificates'
+          depends: '${{ env.APP_NAME }} (>= ${{ needs.pack.outputs.version_deb }}), ${{ env.COLUMNAR_NAME }} (>= ${{ env.COLUMNAR_VERSION }}), ${{ env.GALERA_NAME }} (>= ${{ env.GALERA_VERSION }}), ${{ env.LOAD_NAME }} (>= ${{ env.LOAD_VERSION }}), ca-certificates'
       - name: Build RPM packages
         run: |
           sudo apt-get update -y -q
@@ -417,11 +448,11 @@ jobs:
 
           # Prepare spec file for RPM
           sed -i 's/{{ NAME }}/${{ env.EXTRA_NAME }}/g' $spec_file
-          sed -i 's/{{ VERSION }}/${{ needs.vars.outputs.app_version }}${{ needs.vars.outputs.rpm_suffix }}/g' $spec_file
+          sed -i 's/{{ VERSION }}/${{ needs.pack.outputs.version_rpm }}/g' $spec_file
           sed -i 's/{{ MAINTAINER }}/${{ env.MAINTAINER }}/g' $spec_file
           sed -i 's/{{ DESC }}/${{ env.EXTRA_DESC }}/g' $spec_file
           sed -i 's/{{ EXECUTOR_NAME }}/${{ env.APP_NAME }}/g' $spec_file
-          sed -i 's/{{ EXECUTOR_VERSION }}/${{ needs.vars.outputs.app_version }}${{ needs.vars.outputs.rpm_suffix }}/g' $spec_file
+          sed -i 's/{{ EXECUTOR_VERSION }}/${{ needs.pack.outputs.version_rpm }}/g' $spec_file
           sed -i 's/{{ COLUMNAR_NAME }}/${{ env.COLUMNAR_NAME }}/g' $spec_file
           sed -i 's/{{ COLUMNAR_VERSION }}/${{ env.COLUMNAR_VERSION }}/g' $spec_file
           sed -i 's/{{ GALERA_NAME }}/${{ env.GALERA_NAME }}/g' $spec_file
@@ -440,9 +471,8 @@ jobs:
 
       - name: Rename packages to proper name
         run: |
-          version=${{ needs.vars.outputs.app_version }}${{ needs.vars.outputs.rpm_suffix }}
+          version=${{ needs.pack.outputs.version_rpm }}
           rpm_path="./${{ env.EXTRA_NAME }}-${version}-1.noarch.rpm"
-          cp $rpm_path "./${{ env.EXTRA_NAME }}-${version}-1.el7.noarch.rpm"
           cp $rpm_path "./${{ env.EXTRA_NAME }}-${version}-1.el8.noarch.rpm"
           cp $rpm_path "./${{ env.EXTRA_NAME }}-${version}-1.el9.noarch.rpm"
           mv $rpm_path "./${{ env.EXTRA_NAME }}-${version}-1.el10.noarch.rpm"
@@ -460,11 +490,6 @@ jobs:
 
       - uses: manticoresoftware/upload_artifact_with_retries@main
         with:
-          name: artifact-extra-rpm-el7
-          path: ./artifacts/*.el7.noarch.rpm
-
-      - uses: manticoresoftware/upload_artifact_with_retries@main
-        with:
           name: artifact-extra-rpm-el8
           path: ./artifacts/*.el8.noarch.rpm
 
@@ -476,7 +501,7 @@ jobs:
       - uses: manticoresoftware/upload_artifact_with_retries@main
         with:
           name: artifact-extra-rpm-el10
-          path: ./artifacts/*.el10.noarch.rpm
+          path: ./artifacts/*.el10.noarch.rpm  
 
   create-release:
     runs-on: ubuntu-22.04
@@ -581,9 +606,6 @@ jobs:
             suffix: "arm64"
             asset_content_type: application/vnd.debian.binary-package
           - pkg: rpm
-            suffix: "el7-amd64"
-            asset_content_type: application/x-rpm
-          - pkg: rpm
             suffix: "el8-amd64"
             asset_content_type: application/x-rpm
           - pkg: rpm
@@ -591,9 +613,6 @@ jobs:
             asset_content_type: application/x-rpm
           - pkg: rpm
             suffix: "el10-amd64"
-            asset_content_type: application/x-rpm
-          - pkg: rpm
-            suffix: "el7-aarch64"
             asset_content_type: application/x-rpm
           - pkg: rpm
             suffix: "el8-aarch64"
@@ -642,9 +661,6 @@ jobs:
           - pkg: deb
             suffix: ""
             asset_content_type: application/vnd.debian.binary-package
-          - pkg: rpm
-            suffix: "-el7"
-            asset_content_type: application/x-rpm
           - pkg: rpm
             suffix: "-el8"
             asset_content_type: application/x-rpm
@@ -695,10 +711,13 @@ jobs:
 
   deploy:
     needs:
+      - pack
       - upload-release
       - upload-linux-packages
       - upload-extra-packages
     runs-on: ubuntu-22.04
+    env:
+      target: ${{ needs.pack.outputs.target }}
     strategy:
       matrix:
         include:
@@ -762,16 +781,6 @@ jobs:
             arch: arm64
             delimiter: "-"
             distro: bookworm
-          - artifact: artifact-rpm-el7-amd64
-            type: rpm
-            arch: x86_64
-            delimiter: "_"
-            distro: 7
-          - artifact: artifact-rpm-el7-aarch64
-            type: rpm
-            arch: aarch
-            delimiter: "_"
-            distro: 7
           - artifact: artifact-rpm-el8-amd64
             type: rpm
             arch: x86_64
@@ -843,11 +852,6 @@ jobs:
             arch: all
             delimiter: "-"
             distro: bookworm
-          - artifact: artifact-extra-rpm-el7
-            type: rpm
-            arch: noarch
-            delimiter: "_"
-            distro: 7
           - artifact: artifact-extra-rpm-el8
             type: rpm
             arch: noarch
@@ -878,7 +882,7 @@ jobs:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     needs:
-      - vars
+      - pack
       - deploy
     strategy:
       matrix:
@@ -909,11 +913,11 @@ jobs:
           platforms: linux/amd64, linux/arm64
           load: false
           push: true
-          tags: ${{ env.DOCKER_TAG }}:${{ needs.vars.outputs.app_version }}
+          tags: ${{ env.DOCKER_TAG }}:${{ needs.pack.outputs.version }}
 
   update-manticoresearch-deps:
     needs:
-      - vars
+      - pack
       - deploy
     runs-on: ubuntu-22.04
     steps:
@@ -921,5 +925,5 @@ jobs:
         uses: manticoresoftware/manticoresearch/actions/update-deps@master
         with:
           name: executor
-          version: "${{ needs.vars.outputs.app_version }} ${{ needs.vars.outputs.app_date }} ${{ needs.vars.outputs.app_commit }}"
+          version: "${{ needs.pack.outputs.version_full }}"
           token: ${{ secrets.PR_TOKEN }}
