@@ -10,7 +10,7 @@
 
 current_date=$( date +%y%m%d )
 APP_DATE=${APP_DATE:-$current_date}
-assets="${APP_NAME}_${APP_VERSION}-${APP_DATE}-${GITHUB_SHA:0:7}_$(echo "${RUNNER_OS}" | tr '[:upper:]' '[:lower:]')_${APP_ARCH}${ASSET_SUFFIX}"
+assets="${APP_NAME}-${APP_VERSION}+${APP_DATE}-${GITHUB_SHA:0:7}-$(echo "${RUNNER_OS}" | tr '[:upper:]' '[:lower:]')-${APP_ARCH}${ASSET_SUFFIX}"
 
 pwd
 echo "$assets"
