@@ -552,19 +552,19 @@ jobs:
       matrix:
         include:
           - artifact_suffix: ubuntu-22.04-amd64
-            asset_name_suffix: linux_amd64.tar.gz
+            asset_name_suffix: linux-amd64.tar.gz
             asset_content_type: application/gzip
           - artifact_suffix: ubuntu-22.04-arm64
-            asset_name_suffix: linux_arm64.tar.gz
+            asset_name_suffix: linux-arm64.tar.gz
             asset_content_type: application/gzip
           - artifact_suffix: macos-13-x86_64
-            asset_name_suffix: macos_x86_64.tar.gz
+            asset_name_suffix: macos-x86_64.tar.gz
             asset_content_type: application/gzip
           - artifact_suffix: macos-14-arm64
-            asset_name_suffix: macos_arm64.tar.gz
+            asset_name_suffix: macos-arm64.tar.gz
             asset_content_type: application/gzip
           - artifact_suffix: dev-ubuntu-22.04-amd64
-            asset_name_suffix: linux_amd64-dev.tar.gz
+            asset_name_suffix: linux-amd64-dev.tar.gz
             asset_content_type: application/gzip
     steps:
       - uses: manticoresoftware/download_artifact_with_retries@main
