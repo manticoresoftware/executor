@@ -877,6 +877,7 @@ jobs:
           artifact: ${{ matrix.artifact }}
           type: ${{ matrix.type }}
           delimiter: ${{ matrix.delimiter }}
+          target: ${{ env.target }}
 
   deploy-docker:
     name: ${{ matrix.name }}
