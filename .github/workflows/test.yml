@@ -21,18 +21,26 @@ jobs:
             os: ubuntu-22.04
             use_docker: true
             script_name: ./build-alpine
+            arch: amd64
+            build_type: alpine
           - job_name: 'Build dev version in Jammy'
             os: ubuntu-22.04
             use_docker: false
             script_name: ./build-linux
+            arch: amd64
+            build_type: jammy
           - job_name: 'Build static on amd64 OSX'
             os: macos-13
             use_docker: false
             script_name: ./build-osx
+            arch: amd64
+            build_type: osx
           - job_name: 'Build static on arm64 OSX'
             os: macos-14
             use_docker: false
             script_name: ./build-osx
+            arch: arm64
+            build_type: osx
 
     steps:
       - uses: actions/checkout@v4
@@ -48,7 +56,7 @@ jobs:
       - name: Create artifact
         run: |
           os="${{ runner.os }}"
-          assets="${{ env.APP_NAME }}_$(echo "${{ runner.os }}" | tr '[:upper:]' '[:lower:]')_amd64"
+          assets="${{ env.APP_NAME }}_${{ matrix.build_type }}_${{ matrix.arch }}"
           echo "$assets"
           mkdir -p "dist/$assets"
           if [[ "${{ runner.os }}" == Windows ]]; then
@@ -70,7 +78,7 @@ jobs:
         shell: bash
       - uses: actions/upload-artifact@v4
         with:
-          name: artifact-${{ matrix.os }}-amd64
+          name: artifact-${{ matrix.build_type }}-${{ matrix.arch }}
           path: |
             dist/*.tar.gz
             dist/*.zip
