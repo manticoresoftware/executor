@@ -506,7 +506,11 @@ jobs:
   deploy:
     needs:
       - pack
+      - build-artifact
+      - build-artifact-dev
       - build-extra-packages
+      - build-linux-packages
+      - build-linux-packages-arm64
     runs-on: ubuntu-22.04
     env:
       target: ${{ needs.pack.outputs.target }}
