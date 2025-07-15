@@ -515,6 +515,7 @@ jobs:
       - build-linux-packages
       - build-linux-packages-arm64
       - build-extra-packages
+      - pack
     steps:
       - uses: actions/checkout@v3
         with:
@@ -531,8 +532,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
+          tag_name: ${{ needs.pack.outputs.version }}
+          release_name: ${{ needs.pack.outputs.version }}
           body_path: ./CHANGELOG.md
           draft: false
           prerelease: true
