@@ -135,7 +135,7 @@ jobs:
         run: |
           [ -n "${{ matrix.run }}" ] && ${{ matrix.run }} ${{ env.PHP_VERSION }} || true
           APP_ARCH=${{ matrix.arch }} \
-            APP_VERSION=${{ needs.pack.outputs.version }} \
+            APP_VERSION=${{ needs.pack.outputs.version_full }} \
             APP_NAME=${{ env.APP_NAME }} \
             RUNNER_OS="${{ runner.os }}" \
             DOCKER_IMAGE=${{ env.DOCKER_TAG }}:${{ needs.pack.outputs.version }} \
@@ -146,6 +146,7 @@ jobs:
           name: artifact-${{ matrix.os }}-${{ matrix.arch }}
           path: ./*${{ matrix.arch }}.tar.gz
 
+  # this step is important for the release process, because it creates the artifact for the dev version which is then put to github as a release asset and used by test_kit_docker_build.sh
   build-artifact-dev:
     runs-on: ubuntu-22.04
     needs:
@@ -188,7 +189,6 @@ jobs:
           path: .
       - name: Prepare packages structure
         run: |
-          # name is like assets manticore-executor_v0.5.1-221214-e089052_linux_amd64:
           tar -xzf *.tar.gz
 
           # Setup openssl workaround
@@ -294,7 +294,6 @@ jobs:
           path: .
       - name: Prepare package
         run: |
-          # name is like assets manticore-executor_v0.5.1-221214-e089052_linux_arm64:
           tar -xzf *.tar.gz
 
           # Setup openssl workaround
