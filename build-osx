@@ -76,6 +76,8 @@ if [[ "$bison_ver" =~ ^2\.[0-9]+$ ]]; then
   export YACC="$bison/bin/bison"
 fi
 
+brew --prefix libiconv
+
 # Fix the path for the librdkafka
 kafka_prefix=$(brew --prefix librdkafka)
 sed "s|SEARCH_PATH=\"/usr/local /usr\"|SEARCH_PATH=\"${kafka_prefix}\"|" configure > configure-new
@@ -94,7 +96,7 @@ chmod +x configure
   --with-rdkafka \
 	--enable-jchash \
 	--enable-simdjson \
-  --with-openssl --with-zlib --with-zip --with-iconv=/opt/local \
+  --with-openssl --with-zlib --with-zip --with-iconv=$(brew --prefix libiconv) \
   --enable-filter \
   --with-curl \
   --enable-opcache \
