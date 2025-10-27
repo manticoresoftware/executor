@@ -47,7 +47,7 @@ ENABLE_STATIC=yes
   --with-rdkafka \
 	--enable-jchash \
 	--enable-simdjson \
-  --with-openssl --with-zlib --with-zip \
+  --with-openssl --with-zlib --with-zip --with-iconv \
   --enable-filter \
   --with-curl \
   --enable-mbstring \
@@ -55,7 +55,6 @@ ENABLE_STATIC=yes
   --enable-sysvsem \
 	--with-mysqli \
 	--enable-mysqlnd \
-  --with-iconv \	
   "${BUILD_EXTRA[@]}"
 
 make -j8
