@@ -76,8 +76,6 @@ if [[ "$bison_ver" =~ ^2\.[0-9]+$ ]]; then
   export YACC="$bison/bin/bison"
 fi
 
-brew --prefix libiconv
-
 # Fix the path for the librdkafka
 kafka_prefix=$(brew --prefix librdkafka)
 sed "s|SEARCH_PATH=\"/usr/local /usr\"|SEARCH_PATH=\"${kafka_prefix}\"|" configure > configure-new
