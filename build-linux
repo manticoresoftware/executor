@@ -36,14 +36,14 @@ LIBZIP_PREFIX="$(dirname $(find / -name libzip.so.4 2>/dev/null))"
 
 echo $LIBZIP_PREFIX
 
-echo "$(dirname $(find / -name libiconv.so* 2>/dev/null))"
+echo "$(dirname $(find / -name libicurl.so* 2>/dev/null))"
  
 
 export LD_LIBRARY_PATH=${LIBZIP_PREFIX}:${LD_LIBRARY_PATH}
 
 echo $LIBZIP_PREFIX 
 
-echo $BUILD_PREFIX
+echo $LD_LIBRARY_PATH
 
 ENABLE_SHARED=yes
 ENABLE_STATIC=yes
@@ -73,4 +73,4 @@ ENABLE_STATIC=yes
 make -j8
 make install-cli
 
-ldconfig
+sudo ldconfig
