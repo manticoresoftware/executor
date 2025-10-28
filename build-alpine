@@ -22,7 +22,7 @@ install_deps() {
     ln -s /usr/bin/objcopy "/usr/bin/${arch}-alpine-linux-musl-objcopy"
   export CROSS_COMPILE="/usr/bin/${arch}-alpine-linux-musl-"
 
-  apk add curl git autoconf bison re2c pkgconf zlib-dev zstd-dev openssl-libs-static openssl-dev zlib-static zlib-dev
+  apk add curl git autoconf bison re2c pkgconf zlib-dev zstd-dev openssl-libs-static openssl-dev zlib-static zlib-dev gnu-libiconv-dev
 
   install_curl
 
@@ -70,6 +70,7 @@ ENABLE_STATIC=yes
   --enable-sysvsem \
 	--with-mysqli \
 	--enable-mysqlnd \
+  --with-iconv \
   "${BUILD_EXTRA[@]}"
 
 fix_static_linking

@@ -8,16 +8,17 @@
 
 set -e
 install_deps() {
-  brew install bash curl autoconf automake bison re2c zstd git openssl zlib cmake libzip librdkafka
+  brew install bash curl autoconf automake bison re2c zstd git openssl zlib cmake libzip librdkafka libiconv
 
   OPENSSL_PREFIX="$(brew --prefix openssl)"
   LIBRDKAFKA_PREFIX="$(brew --prefix librdkafka)"
+  ICONV_PREFIX="$(brew --prefix libiconv)"
   OPENSSL_CFLAGS="-I${OPENSSL_PREFIX}/include"
   OPENSSL_LIBS="-L${OPENSSL_PREFIX}/lib -lcrypto -lssl"
   export OPENSSL_PREFIX OPENSSL_CFLAGS OPENSSL_LIBS
   export PATH="${OPENSSL_PREFIX}/bin:${PATH}"
-  export LDFLAGS="-L${OPENSSL_PREFIX}/lib -L${LIBRDKAFKA_PREFIX}/lib"
-  export CPPFLAGS="-I${OPENSSL_PREFIX}/include -I${LIBRDKAFKA_PREFIX}/include"
+  export LDFLAGS="-L${OPENSSL_PREFIX}/lib -L${LIBRDKAFKA_PREFIX}/lib -L${ICONV_PREFIX}/lib"
+  export CPPFLAGS="-I${OPENSSL_PREFIX}/include -I${LIBRDKAFKA_PREFIX}/include -I${ICONV_PREFIX}/include"
 
   export PKG_CONFIG_PATH="${OPENSSL_PREFIX}/lib/pkgconfig"
 }
@@ -94,7 +95,7 @@ chmod +x configure
   --with-rdkafka \
 	--enable-jchash \
 	--enable-simdjson \
-  --with-openssl --with-zlib --with-zip \
+  --with-openssl --with-zlib --with-zip --with-iconv=$(brew --prefix libiconv) \
   --enable-filter \
   --with-curl \
   --enable-opcache \
