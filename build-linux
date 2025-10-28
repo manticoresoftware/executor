@@ -17,7 +17,7 @@ set -xe
 
 install_deps() {
   sudo apt-get update -y
-  sudo apt-get install -y curl build-essential autoconf automake bison re2c libzstd-dev pkg-config git libssl-dev zlib1g-dev libzip-dev libonig-dev cmake libcurl4-openssl-dev librdkafka-dev libiconv-hook-dev libzip4
+  sudo apt-get install -y curl build-essential autoconf automake bison re2c libzstd-dev pkg-config git libssl-dev zlib1g-dev libzip-dev libonig-dev cmake libcurl4-openssl-dev libzip-dev librdkafka-dev libiconv-hook-dev
 }
 
 install_dev_deps() {
@@ -32,24 +32,11 @@ if [ "$BUILD_DEV" -eq 1 ]; then
   build_dev_conf
 fi
 
-LIBZIP_PREFIX="$(dirname $(find / -name libzip.so.4 2>/dev/null))"
-
-echo $LIBZIP_PREFIX
-
-echo "$(dirname $(find / -name libicurl.so* 2>/dev/null))"
- 
-
-export LD_LIBRARY_PATH=${LIBZIP_PREFIX}:${LD_LIBRARY_PATH}
-
-echo $LIBZIP_PREFIX 
-
-echo $LD_LIBRARY_PATH
 
 ENABLE_SHARED=yes
 ENABLE_STATIC=yes
 
-
-./configure LDFLAGS="-L${LIBZIP_PREFIX} -Wl,-rpath,${LIBZIP_PREFIX}" CFLAGS="-O3" --prefix="$BUILD_PREFIX" --disable-all \
+./configure CFLAGS="-O3" --prefix="$BUILD_PREFIX" --disable-all \
   --enable-shared=$ENABLE_SHARED --enable-static=$ENABLE_STATIC --with-layout=GNU \
   --with-pear=no --disable-cgi --disable-phpdbg \
   --with-pcre-jit --enable-zstd --with-libzstd  \
@@ -60,7 +47,7 @@ ENABLE_STATIC=yes
   --with-rdkafka \
 	--enable-jchash \
 	--enable-simdjson \
-  --with-openssl --with-zlib --enable-zip --with-iconv \
+  --with-openssl --with-zlib --with-zip --with-iconv \
   --enable-filter \
   --with-curl \
   --enable-mbstring \
@@ -72,5 +59,3 @@ ENABLE_STATIC=yes
 
 make -j8
 make install-cli
-
-sudo ldconfig
