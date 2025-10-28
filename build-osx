@@ -12,7 +12,7 @@ install_deps() {
 
   OPENSSL_PREFIX="$(brew --prefix openssl)"
   LIBRDKAFKA_PREFIX="$(brew --prefix librdkafka)"
-  ICONV_PREFIX="$(brew --prefix librdkafka)"
+  ICONV_PREFIX="$(brew --prefix libiconv)"
   OPENSSL_CFLAGS="-I${OPENSSL_PREFIX}/include"
   OPENSSL_LIBS="-L${OPENSSL_PREFIX}/lib -lcrypto -lssl"
   export OPENSSL_PREFIX OPENSSL_CFLAGS OPENSSL_LIBS
