@@ -36,12 +36,14 @@ LIBZIP_PREFIX="$(dirname $(find / -name libzip.so.4 2>/dev/null))"
 
 echo $LIBZIP_PREFIX 
 
-export LD_LIBRARY_PATH=$LIBZIP_PREFIX:$LD_LIBRARY_PATH
+echo $BUILD_PREFIX
 
 ENABLE_SHARED=yes
 ENABLE_STATIC=yes
 
-./configure LDFLAGS="-Wl,-rpath,${LIBZIP_PREFIX}" CFLAGS="-O3" --prefix="$BUILD_PREFIX" --disable-all \
+make distclean || make clean
+
+./configure LDFLAGS="-L${LIBZIP_PREFIX} -Wl,-rpath,${LIBZIP_PREFIX}" CFLAGS="-O3" --prefix="$BUILD_PREFIX" --disable-all \
   --enable-shared=$ENABLE_SHARED --enable-static=$ENABLE_STATIC --with-layout=GNU \
   --with-pear=no --disable-cgi --disable-phpdbg \
   --with-pcre-jit --enable-zstd --with-libzstd  \
@@ -64,3 +66,5 @@ ENABLE_STATIC=yes
 
 make -j8
 make install-cli
+
+ldconfig
