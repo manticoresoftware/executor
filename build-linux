@@ -32,7 +32,11 @@ if [ "$BUILD_DEV" -eq 1 ]; then
   build_dev_conf
 fi
 
-find / -name libzip.so.4 2>/dev/null
+LIBZIP_PREFIX="$(dirname $(find / -name libzip.so.4 2>/dev/null))"
+
+echo $LIBZIP_PREFIX 
+
+export LD_LIBRARY_PATH=$LIBZIP_PREFIX:$LD_LIBRARY_PATH
 
 ENABLE_SHARED=yes
 ENABLE_STATIC=yes
