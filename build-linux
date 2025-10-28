@@ -41,7 +41,7 @@ export LD_LIBRARY_PATH=$LIBZIP_PREFIX:$LD_LIBRARY_PATH
 ENABLE_SHARED=yes
 ENABLE_STATIC=yes
 
-./configure LDFLAGS="-L${LIBZIP_PREFIX}" CFLAGS="-O3" --prefix="$BUILD_PREFIX" --disable-all \
+./configure LDFLAGS="-Wl,-rpath,${LIBZIP_PREFIX}" CFLAGS="-O3" --prefix="$BUILD_PREFIX" --disable-all \
   --enable-shared=$ENABLE_SHARED --enable-static=$ENABLE_STATIC --with-layout=GNU \
   --with-pear=no --disable-cgi --disable-phpdbg \
   --with-pcre-jit --enable-zstd --with-libzstd  \
