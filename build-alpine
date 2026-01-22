@@ -22,7 +22,7 @@ install_deps() {
     ln -s /usr/bin/objcopy "/usr/bin/${arch}-alpine-linux-musl-objcopy"
   export CROSS_COMPILE="/usr/bin/${arch}-alpine-linux-musl-"
 
-  apk add curl git autoconf bison re2c pkgconf zlib-dev zstd-dev openssl-libs-static openssl-dev zlib-static zlib-dev gnu-libiconv-dev
+  apk add curl git autoconf bison re2c pkgconf zlib-dev zstd-dev openssl-libs-static openssl-dev zlib-static zlib-dev gnu-libiconv-dev clang-dev llvm-dev
 
   install_curl
 
@@ -31,6 +31,8 @@ install_deps() {
   install_zlib
 
   install_rdkafka
+
+  install_rust
 }
 
 install_dev_deps() {
@@ -39,7 +41,7 @@ install_dev_deps() {
   install_libxml2
 }
 
-export -f install_deps install_dev_deps
+export -f install_deps install_dev_deps install_rust
 . build-bash-base.sh "$@"
 
 if [ "$BUILD_DEV" -eq 1 ]; then
@@ -61,6 +63,7 @@ ENABLE_STATIC=yes
   --with-rdkafka \
 	--enable-jchash \
 	--enable-simdjson \
+	--enable-llm \
   --with-openssl --with-zlib --with-zip \
   --enable-filter \
   --with-curl \

@@ -7,8 +7,10 @@
 # you can find it at https://www.php.net/license/3_01.txt
 
 set -e
+. helper.sh
+
 install_deps() {
-  brew install bash curl autoconf automake bison re2c zstd git openssl zlib cmake libzip librdkafka libiconv
+  brew install bash curl autoconf automake bison re2c zstd git openssl zlib cmake libzip librdkafka libiconv llvm@17
 
   OPENSSL_PREFIX="$(brew --prefix openssl)"
   LIBRDKAFKA_PREFIX="$(brew --prefix librdkafka)"
@@ -21,13 +23,15 @@ install_deps() {
   export CPPFLAGS="-I${OPENSSL_PREFIX}/include -I${LIBRDKAFKA_PREFIX}/include -I${ICONV_PREFIX}/include"
 
   export PKG_CONFIG_PATH="${OPENSSL_PREFIX}/lib/pkgconfig"
+
+  install_rust
 }
 
 install_dev_deps() {
   brew install libxml2 oniguruma libgmp
 }
 
-export -f install_deps install_dev_deps
+export -f install_deps install_dev_deps install_rust
 . ./build-bash-base.sh "$@"
 
 hide_dynamic_libs() {
@@ -95,6 +99,7 @@ chmod +x configure
   --with-rdkafka \
 	--enable-jchash \
 	--enable-simdjson \
+	--enable-llm \
   --with-openssl --with-zlib --with-zip --with-iconv=$(brew --prefix libiconv) \
   --enable-filter \
   --with-curl \

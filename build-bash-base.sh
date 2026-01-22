@@ -14,6 +14,7 @@ SWOOLE_REV="3e1a1f89930ba0bbea1f5ee31bcd0ee701a87aab"
 RDKAFKA_REV="53398031f1cd96e437e9705b67b4dc19d955acb6"
 JCHASH_REV="8ed50cc8c211effe1c214eae1e3240622e0f11b0"
 SIMDJSON_REV="9a2745669fea733a40f9443b1a793846d0759b89"
+LLM_REV="449ecb2dc64deeb5969d109451c3655947a7d26c"
 SKIP_SYSTEM_DEPS="$2"
 BUILD_DEV="$3"
 BUILD_STATIC=1 # Always build static but dev
@@ -79,7 +80,18 @@ else
 fi
 cd ..
 
-cd ..
+# llm
+git clone https://github.com/manticoresoftware/llm-php-ext.git llm
+cd llm && git checkout "$LLM_REV"
+if [ "$(uname)" == "Darwin" ]; then
+	# macOS: Use LLVM 17 from Homebrew
+	LLVM_PREFIX="$(brew --prefix llvm@17 2>/dev/null || echo /opt/homebrew/opt/llvm@17)"
+	LIBCLANG_PATH="$LLVM_PREFIX/lib"
+	LLVM_CONFIG_PATH="$LLVM_PREFIX/bin/llvm-config"
+	LLVM_PATH="$LLVM_PREFIX/bin"
+	export LIBCLANG_PATH="$LIBCLANG_PATH" LLVM_CONFIG_PATH="$LLVM_CONFIG_PATH" PATH="$LLVM_PATH:$PATH"
+fi
+cd ../..
 
 BUILD_EXTRA=()
 if [[ "$BUILD_DEV" == "1" ]]; then
