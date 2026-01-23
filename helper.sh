@@ -71,7 +71,7 @@ build_dev_conf() {
 	git checkout 68eb143bd5700a6fe041826118aeb9a13a3fcef3
 	cd ..
 
-	# It does not work with PHP 8.4.2
+	# It does not work with PHP 8.4.17
 	# git clone https://github.com/tideways/php-xhprof-extension.git tideways_xhprof && cd "$_"
 	# git checkout 7877082945fcccced12676749676af1736a00f65
 	# cd ..
