@@ -52,7 +52,7 @@ jobs:
         run: ${{ matrix.script_name }} ${{ env.PHP_VERSION }}
       - name: Build binary using Docker
         if: ${{ matrix.use_docker == true }}
-        run: docker run -v ${PWD}:/src -w /src alpine:3.17 sh -c "apk add sudo bash; ${{ matrix.script_name }} ${{ env.PHP_VERSION }}"
+        run: docker run -v ${PWD}:/src -w /src alpine:3.21 sh -c "apk add sudo bash; ${{ matrix.script_name }} ${{ env.PHP_VERSION }}"
       - name: Create artifact
         run: |
           os="${{ runner.os }}"
