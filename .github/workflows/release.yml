@@ -103,12 +103,12 @@ jobs:
             use_buildx: true
             run: ""
           - name: AMD64 native on OSX
-            os: macos-15
+            os: macos-15-intel
             arch: x86_64
             use_buildx: false
             run: ./build-osx
           - name: ARM64 native on OSX
-            os: macos-14
+            os: macos-15
             arch: arm64
             use_buildx: false
             run: ./build-osx

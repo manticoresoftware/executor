@@ -30,13 +30,13 @@ jobs:
             arch: amd64
             build_type: jammy
           - job_name: 'Build static on amd64 OSX'
-            os: macos-15
+            os: macos-15-intel
             use_docker: false
             script_name: ./build-osx
             arch: amd64
             build_type: osx
           - job_name: 'Build static on arm64 OSX'
-            os: macos-14
+            os: macos-15
             use_docker: false
             script_name: ./build-osx
             arch: arm64
