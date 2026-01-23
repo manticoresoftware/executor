@@ -10,7 +10,7 @@ set -e
 . helper.sh
 
 install_deps() {
-  brew install bash curl autoconf automake bison re2c zstd git openssl zlib cmake libzip librdkafka libiconv llvm@17
+  brew install php@8.4 bash curl autoconf automake bison re2c zstd git openssl zlib cmake libzip librdkafka libiconv llvm@17
 
   OPENSSL_PREFIX="$(brew --prefix openssl)"
   LIBRDKAFKA_PREFIX="$(brew --prefix librdkafka)"

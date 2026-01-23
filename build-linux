@@ -17,7 +17,10 @@ set -xe
 
 install_deps() {
   sudo apt-get update -y
-  sudo apt-get install -y curl build-essential autoconf automake bison re2c libzstd-dev pkg-config git libssl-dev zlib1g-dev libzip-dev libonig-dev cmake libcurl4-openssl-dev libzip-dev librdkafka-dev libiconv-hook-dev wget
+  sudo apt-get install -y software-properties-common
+  sudo add-apt-repository ppa:ondrej/php -y
+  sudo apt-get update -y
+  sudo apt-get install -y php8.4 php8.4-dev php8.4-cli build-essential clang libclang-dev pkg-config curl autoconf automake bison re2c libzstd-dev git libssl-dev zlib1g-dev libzip-dev libonig-dev cmake libcurl4-openssl-dev librdkafka-dev libiconv-hook-dev wget
   # Install LLVM 17 directly from apt.llvm.org
   wget -qO - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/llvm-archive-keyring.gpg
   echo "deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] http://apt.llvm.org/jammy/ llvm-toolchain-jammy-17 main" | sudo tee /etc/apt/sources.list.d/llvm.list > /dev/null
