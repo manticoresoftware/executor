@@ -22,7 +22,7 @@ install_deps() {
     ln -s /usr/bin/objcopy "/usr/bin/${arch}-alpine-linux-musl-objcopy"
   export CROSS_COMPILE="/usr/bin/${arch}-alpine-linux-musl-"
 
-  apk add php84 php84-dev curl git autoconf bison re2c pkgconf zlib-dev zstd-dev openssl-libs-static openssl-dev zlib-static zlib-dev gnu-libiconv-dev clang-dev llvm-dev
+  apk add php84 php84-dev curl git autoconf bison re2c pkgconf zlib-dev zstd-static zstd-dev openssl-libs-static openssl-dev zlib-static zlib-dev gnu-libiconv-dev clang-dev llvm-dev
 
   # Create symlinks for php84 to be accessible as php
   ln -sf /usr/bin/php84 /usr/bin/php
