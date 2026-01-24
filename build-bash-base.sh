@@ -90,7 +90,11 @@ if [ "$(uname)" == "Darwin" ]; then
 	LIBCLANG_PATH="$LLVM_PREFIX/lib"
 	LLVM_CONFIG_PATH="$LLVM_PREFIX/bin/llvm-config"
 	LLVM_PATH="$LLVM_PREFIX/bin"
-	export LIBCLANG_PATH="$LIBCLANG_PATH" LLVM_CONFIG_PATH="$LLVM_CONFIG_PATH" PATH="$LLVM_PATH:$PATH"
+	# Ensure PHP is still accessible by appending LLVM to PATH instead of prepending
+	export LIBCLANG_PATH="$LIBCLANG_PATH" LLVM_CONFIG_PATH="$LLVM_CONFIG_PATH" PATH="$PATH:$LLVM_PATH"
+	# Verify PHP is accessible
+	echo "Verifying PHP is accessible for ext-php-rs build..."
+	which php && php --version || echo "WARNING: php not found in PATH!"
 fi
 cd ../..
 

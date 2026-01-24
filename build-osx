@@ -14,9 +14,10 @@ install_deps() {
   brew install shivammathur/php/php@8.4 bash curl autoconf automake bison re2c zstd git openssl zlib cmake libzip librdkafka libiconv llvm@17
   brew link --overwrite --force shivammathur/php/php@8.4
 
-  # Add PHP to PATH
+  # Add PHP to PATH - include both versioned path and brew bin directory
   PHP_PREFIX="$(brew --prefix shivammathur/php/php@8.4)"
-  export PATH="${PHP_PREFIX}/bin:${PATH}"
+  BREW_PREFIX="$(brew --prefix)"
+  export PATH="${PHP_PREFIX}/bin:${BREW_PREFIX}/bin:${PATH}"
 
   OPENSSL_PREFIX="$(brew --prefix openssl)"
   LIBRDKAFKA_PREFIX="$(brew --prefix librdkafka)"
@@ -39,33 +40,6 @@ install_dev_deps() {
 
 export -f install_deps install_dev_deps install_rust
 . ./build-bash-base.sh "$@"
-
-hide_dynamic_libs() {
-  ! which brew && return
-  for lib in "$@"; do
-    LIB_PATH=$(brew --prefix "$lib")
-    if ls "$LIB_PATH"/lib/*.dylib; then
-      for f in "$LIB_PATH"/lib/*.dylib; do
-        mv "$f" "$f.bak"
-      done
-    fi
-  done
-}
-
-restore_dynamic_libs() {
-  ! which brew && return
-  for lib in "$@"; do
-    LIB_PATH=$(brew --prefix "$lib")
-    if ls "$LIB_PATH"/lib/*.dylib.bak; then
-      for f in "$LIB_PATH"/lib/*.dylib.bak; do
-        mv "$f" "${f%*.bak}"
-      done
-    fi
-  done
-}
-
-# Leave only static libs on
-hide_dynamic_libs zstd zlib
 
 MAKE_LDFLAGS=
 ENABLE_SHARED=yes
@@ -120,5 +94,3 @@ make LDFLAGS=$MAKE_LDFLAGS -j8
 make install-cli
 strip dist/bin/php
 
-# Return skipped dynamic libs
-restore_dynamic_libs zstd zlib
