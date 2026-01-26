@@ -22,7 +22,12 @@ install_deps() {
     ln -s /usr/bin/objcopy "/usr/bin/${arch}-alpine-linux-musl-objcopy"
   export CROSS_COMPILE="/usr/bin/${arch}-alpine-linux-musl-"
 
-  apk add curl git autoconf bison re2c pkgconf zlib-dev zstd-dev openssl-libs-static openssl-dev zlib-static zlib-dev gnu-libiconv-dev
+  apk add php84 php84-dev curl git autoconf bison re2c pkgconf zlib-dev zstd-static zstd-dev openssl-libs-static openssl-dev zlib-static zlib-dev gnu-libiconv-dev clang-dev llvm-dev
+
+  # Create symlinks for php84 to be accessible as php
+  ln -sf /usr/bin/php84 /usr/bin/php
+  ln -sf /usr/bin/php-config84 /usr/bin/php-config
+  ln -sf /usr/bin/phpize84 /usr/bin/phpize
 
   install_curl
 
@@ -31,6 +36,8 @@ install_deps() {
   install_zlib
 
   install_rdkafka
+
+  install_rust
 }
 
 install_dev_deps() {
@@ -39,7 +46,7 @@ install_dev_deps() {
   install_libxml2
 }
 
-export -f install_deps install_dev_deps
+export -f install_deps install_dev_deps install_rust
 . build-bash-base.sh "$@"
 
 if [ "$BUILD_DEV" -eq 1 ]; then
@@ -61,6 +68,7 @@ ENABLE_STATIC=yes
   --with-rdkafka \
 	--enable-jchash \
 	--enable-simdjson \
+	--enable-llm \
   --with-openssl --with-zlib --with-zip \
   --enable-filter \
   --with-curl \
@@ -77,3 +85,8 @@ fix_static_linking
 
 make LDFLAGS=$MAKE_LDFLAGS -j8
 make install-cli
+
+# Remove php84 that was used for building before installing php
+apk del php84 php84-dev
+rm -f /usr/bin/php /usr/bin/php-config /usr/bin/phpize
+

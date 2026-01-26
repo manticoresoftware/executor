@@ -1,11 +1,11 @@
-FROM alpine:3.17
+FROM alpine:3.21
 ARG BUILD_DEV=0
 
 # Install the manticore-executor binary
 COPY . /src
 RUN apk add bash && \
   cd /src && \
-  ./build-alpine 8.4.2 0 $BUILD_DEV && \
+  ./build-alpine 8.4.17 0 $BUILD_DEV && \
   mv build/dist/bin/php /usr/bin/manticore-executor && \
   ln -s /usr/bin/manticore-executor /usr/bin/php && \
   cd ../..

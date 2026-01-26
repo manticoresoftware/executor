@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -ex
 
+install_rust() {
+	# Install Rust toolchain
+	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+	# Source cargo environment
+	. "$HOME/.cargo/env"
+}
+
 install_curl() {
 	test -d curl-8.0.0 && rm -fr "$_"
 	curl -sSL https://github.com/curl/curl/releases/download/curl-8_0_0/curl-8.0.0.tar.gz | tar -xzf -
@@ -64,7 +71,7 @@ build_dev_conf() {
 	git checkout 68eb143bd5700a6fe041826118aeb9a13a3fcef3
 	cd ..
 
-	# It does not work with PHP 8.4.2
+	# It does not work with PHP 8.4.17
 	# git clone https://github.com/tideways/php-xhprof-extension.git tideways_xhprof && cd "$_"
 	# git checkout 7877082945fcccced12676749676af1736a00f65
 	# cd ..

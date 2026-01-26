@@ -17,14 +17,24 @@ set -xe
 
 install_deps() {
   sudo apt-get update -y
-  sudo apt-get install -y curl build-essential autoconf automake bison re2c libzstd-dev pkg-config git libssl-dev zlib1g-dev libzip-dev libonig-dev cmake libcurl4-openssl-dev libzip-dev librdkafka-dev libiconv-hook-dev
+  sudo apt-get install -y software-properties-common
+  sudo add-apt-repository ppa:ondrej/php -y
+  sudo apt-get update -y
+  sudo apt-get install -y php8.4 php8.4-dev php8.4-cli build-essential clang libclang-dev pkg-config curl autoconf automake bison re2c libzstd-dev git libssl-dev zlib1g-dev libzip-dev libonig-dev cmake libcurl4-openssl-dev librdkafka-dev libiconv-hook-dev wget
+  # Install LLVM 17 directly from apt.llvm.org
+  wget -qO - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/llvm-archive-keyring.gpg
+  echo "deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] http://apt.llvm.org/jammy/ llvm-toolchain-jammy-17 main" | sudo tee /etc/apt/sources.list.d/llvm.list > /dev/null
+  sudo apt-get update -y
+  sudo apt-get install -y clang-17 lldb-17 lld-17 clangd-17 clang-tidy-17 clang-format-17 clang-tools-17 llvm-17-dev libomp-17-dev libc++-17-dev libc++abi-17-dev libclang-common-17-dev libclang-17-dev libclang-cpp17-dev || echo "LLVM 17 packages not all available, continuing..."
+
+  install_rust
 }
 
 install_dev_deps() {
   sudo apt-get install -y libonig-dev libgmp-dev libxml2-dev
 }
 
-export -f install_deps install_dev_deps
+export -f install_deps install_dev_deps install_rust
 . build-bash-base.sh "$@"
 
 
@@ -47,6 +57,7 @@ ENABLE_STATIC=yes
   --with-rdkafka \
 	--enable-jchash \
 	--enable-simdjson \
+	--enable-llm \
   --with-openssl --with-zlib --with-zip --with-iconv \
   --enable-filter \
   --with-curl \
@@ -59,3 +70,7 @@ ENABLE_STATIC=yes
 
 make -j8
 make install-cli
+
+# Remove php84 that was used for building before installing php
+sudo apt-get remove -y php8.4-dev php8.4-cli php8.4
+
