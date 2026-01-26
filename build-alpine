@@ -85,3 +85,8 @@ fix_static_linking
 
 make LDFLAGS=$MAKE_LDFLAGS -j8
 make install-cli
+
+# Remove php84 that was used for building before installing php
+apk del php84 php84-dev
+rm -f /usr/bin/php /usr/bin/php-config /usr/bin/phpize
+

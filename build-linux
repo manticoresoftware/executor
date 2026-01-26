@@ -70,3 +70,7 @@ ENABLE_STATIC=yes
 
 make -j8
 make install-cli
+
+# Remove php84 that was used for building before installing php
+sudo apt-get remove -y php8.4-dev php8.4-cli php8.4
+
