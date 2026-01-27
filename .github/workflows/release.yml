@@ -30,9 +30,6 @@ jobs:
   pack:
     name: OK to pack?
     runs-on: ubuntu-22.04
-    permissions:
-      contents: write
-      workflows: write
     outputs:
       version: ${{ steps.semver-tagger.outputs.version }}
       version_full: ${{ steps.semver-tagger.outputs.version_full }}
@@ -49,7 +46,6 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Update version
         id: semver-tagger
         uses: manticoresoftware/semver-tagger-action@main  
