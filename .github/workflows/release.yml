@@ -557,10 +557,10 @@ jobs:
           - artifact_suffix: ubuntu-22.04-arm64
             asset_name_suffix: linux-arm64.tar.gz
             asset_content_type: application/gzip
-          - artifact_suffix: macos-15-x86_64
+          - artifact_suffix: macos-15-intel-x86_64
             asset_name_suffix: macos-x86_64.tar.gz
             asset_content_type: application/gzip
-          - artifact_suffix: macos-14-arm64
+          - artifact_suffix: macos-15-arm64
             asset_name_suffix: macos-arm64.tar.gz
             asset_content_type: application/gzip
           - artifact_suffix: dev-ubuntu-22.04-amd64
@@ -811,12 +811,12 @@ jobs:
             arch: aarch
             delimiter: "_"
             distro: 10
-          - artifact: artifact-macos-15-x86_64
+          - artifact: artifact-macos-15-intel-x86_64
             type: arc
             arch: x86_64
             delimiter: "-"
             distro: ""
-          - artifact: artifact-macos-14-arm64
+          - artifact: artifact-macos-15-arm64
             type: arc
             arch: aarch
             delimiter: "-"
