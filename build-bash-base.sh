@@ -33,9 +33,9 @@ if [[ -z "$SKIP_SYSTEM_DEPS"  || "$SKIP_SYSTEM_DEPS" == 0 ]]; then
 fi
 
 
-curl -sSL "https://www.php.net/distributions/php-${PHP_VERSION}.tar.gz" | tar -xzf -
+curl -sSL "https://github.com/php/php-src/archive/refs/tags/php-${PHP_VERSION}.tar.gz" | tar -xzf -
 test -d build && rm -fr "$_"
-mv "php-$PHP_VERSION" build && cd "$_"
+mv "php-src-php-$PHP_VERSION" build && cd "$_"
 
 # Build extra extensions
 cd ext
@@ -118,7 +118,7 @@ if [[ "$BUILD_DEV" == "1" ]]; then
     # "--enable-memprof"
     # "--enable-memprof-debug"
 		#
-		# It does not work with PHP 8.4.17
+		# It does not work with PHP 8.4.18
     # "--enable-tideways-xhprof"
     # "--enable-xdebug"
   )
