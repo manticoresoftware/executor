@@ -27,6 +27,8 @@ fi
 if [[ -z "$SKIP_SYSTEM_DEPS"  || "$SKIP_SYSTEM_DEPS" == 0 ]]; then
   install_deps
 
+  install_libxml2_deps
+
   if [[ "$BUILD_DEV" == "1" ]]; then
     install_dev_deps
   fi
@@ -97,10 +99,7 @@ if [ "$(uname)" == "Darwin" ]; then
 fi
 cd ../..
 
-BUILD_EXTRA=()
-if [[ "$BUILD_DEV" == "1" ]]; then
-  BUILD_STATIC=0
-  BUILD_EXTRA=(
+BUILD_EXTRA=(
     "--enable-dom"
     "--with-libxml"
     "--enable-tokenizer"
@@ -109,20 +108,24 @@ if [[ "$BUILD_DEV" == "1" ]]; then
     "--enable-xmlreader"
     "--enable-simplexml"
     "--enable-phar"
-    # Little extra exts in case we will need it
-    "--enable-bcmath"
-    "--enable-ctype"
-    "--with-gmp"
-    # Profiling extensions
-    "--enable-debug"
-    # "--enable-memprof"
-    # "--enable-memprof-debug"
+  )
+  if [[ "$BUILD_DEV" == "1" ]]; then
+    BUILD_STATIC=0
+    BUILD_EXTRA+=(
+      # Little extra exts in case we will need it
+      "--enable-bcmath"
+      "--enable-ctype"
+      "--with-gmp"
+      # Profiling extensions
+      "--enable-debug"
+      # "--enable-memprof"
+      # "--enable-memprof-debug"
 		#
 		# It does not work with PHP 8.4.18
-    # "--enable-tideways-xhprof"
-    # "--enable-xdebug"
-  )
-fi
+      # "--enable-tideways-xhprof"
+      # "--enable-xdebug"
+    )
+  fi
 
 # Build main php
 mkdir dist

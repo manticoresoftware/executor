@@ -34,7 +34,11 @@ install_dev_deps() {
   sudo apt-get install -y libonig-dev libgmp-dev libxml2-dev
 }
 
-export -f install_deps install_dev_deps install_rust
+install_libxml2_deps() {
+  sudo apt-get install -y libxml2-dev
+}
+
+export -f install_deps install_dev_deps install_libxml2_deps install_rust
 . build-bash-base.sh "$@"
 
 
