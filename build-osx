@@ -38,7 +38,11 @@ install_dev_deps() {
   brew install libxml2 oniguruma libgmp
 }
 
-export -f install_deps install_dev_deps install_rust
+install_libxml2_deps() {
+  brew install libxml2
+}
+
+export -f install_deps install_dev_deps install_libxml2_deps install_rust
 . ./build-bash-base.sh "$@"
 
 MAKE_LDFLAGS=
