@@ -879,6 +879,7 @@ jobs:
           delimiter: ${{ matrix.delimiter }}
           target: ${{ env.target }}
 
+  # This docker image is used to run manticore-executor on Windows
   deploy-docker:
     name: Deploy docker
     runs-on: ubuntu-22.04
