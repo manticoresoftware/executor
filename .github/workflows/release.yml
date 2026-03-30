@@ -880,23 +880,32 @@ jobs:
           target: ${{ env.target }}
 
   deploy-docker:
-    name: ${{ matrix.name }}
-    runs-on: ${{ matrix.os }}
+    name: Deploy docker
+    runs-on: ubuntu-22.04
     needs:
       - pack
+      - build-artifact
       - deploy
-    strategy:
-      matrix:
-        include:
-          - name: Deploy docker amd64
-            arch: amd64
-            os: ubuntu-22.04
-          - name: Deploy docker arm64
-            arch: arm64
-            os: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Download amd64 artifact
+        uses: manticoresoftware/download_artifact_with_retries@main
+        with:
+          name: artifact-ubuntu-22.04-amd64
+          path: .
+      - name: Download arm64 artifact
+        uses: manticoresoftware/download_artifact_with_retries@main
+        with:
+          name: artifact-ubuntu-22.04-arm64
+          path: .
+      - name: Extract binaries
+        run: |
+          for arch in amd64 arm64; do
+            tar -xzf *-linux-${arch}.tar.gz
+            cp *-linux-${arch}/${{ env.APP_NAME }} manticore-executor-${arch}
+            chmod +x manticore-executor-${arch}
+          done
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
@@ -906,13 +915,12 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Build docker image
+      - name: Build and push docker image
         uses: docker/build-push-action@v3
         with:
           context: .
           file: ./Dockerfile-dist
-          platforms: linux/amd64, linux/arm64
-          load: false
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ env.DOCKER_TAG }}:${{ needs.pack.outputs.version }}
 
