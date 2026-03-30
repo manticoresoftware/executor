@@ -906,8 +906,6 @@ jobs:
             cp *-linux-${arch}/${{ env.APP_NAME }} manticore-executor-${arch}
             chmod +x manticore-executor-${arch}
           done
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       - name: Login to Docker Hub
