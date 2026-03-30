@@ -1,0 +1,4 @@
+FROM ubuntu:22.04
+ARG TARGETARCH
+COPY manticore-executor-${TARGETARCH} /usr/bin/manticore-executor
+ENTRYPOINT ["/usr/bin/manticore-executor"]
