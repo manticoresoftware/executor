@@ -6,6 +6,7 @@ on:
       - main
     tags:
       - 'release-*'
+      - 'pack_publish'
   pull_request:
     branches: [ main ]
     types: [opened, synchronize, reopened, labeled, unlabeled]
