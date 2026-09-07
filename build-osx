@@ -61,7 +61,7 @@ fi
 bison_ver=$(bison --version | head -n1 | cut -d' ' -f4)
 if [[ "$bison_ver" =~ ^2\.[0-9]+$ ]]; then
   if which brew; then
-    bison=$(brew info bison | grep files | cut -d' ' -f1)
+    bison="$(brew --prefix bison)"
   else
     bison=$(test -d /usr/local/opt && echo "$_" || which /usr)
   fi
