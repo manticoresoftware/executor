@@ -11,11 +11,14 @@ set -e
 
 install_deps() {
   brew tap shivammathur/php
-  brew install shivammathur/php/php@8.4 bash curl autoconf automake bison re2c zstd git openssl zlib cmake libzip librdkafka libiconv llvm@17
-  brew link --overwrite --force shivammathur/php/php@8.4
+  # GitHub macOS runners ship php from homebrew/core; brew refuses to
+  # install a same-named formula from another tap, so drop the core one first
+  brew uninstall --force --ignore-dependencies php || true
+  brew install shivammathur/php/php bash curl autoconf automake bison re2c zstd git openssl zlib cmake libzip librdkafka libiconv llvm@17
+  brew link --overwrite --force shivammathur/php/php
 
   # Add PHP to PATH - include both versioned path and brew bin directory
-  PHP_PREFIX="$(brew --prefix shivammathur/php/php@8.4)"
+  PHP_PREFIX="$(brew --prefix shivammathur/php/php)"
   BREW_PREFIX="$(brew --prefix)"
   export PATH="${PHP_PREFIX}/bin:${BREW_PREFIX}/bin:${PATH}"
 
@@ -58,7 +61,7 @@ fi
 bison_ver=$(bison --version | head -n1 | cut -d' ' -f4)
 if [[ "$bison_ver" =~ ^2\.[0-9]+$ ]]; then
   if which brew; then
-    bison=$(brew info bison | grep files | cut -d' ' -f1)
+    bison="$(brew --prefix bison)"
   else
     bison=$(test -d /usr/local/opt && echo "$_" || which /usr)
   fi

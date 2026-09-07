@@ -22,12 +22,12 @@ install_deps() {
     ln -s /usr/bin/objcopy "/usr/bin/${arch}-alpine-linux-musl-objcopy"
   export CROSS_COMPILE="/usr/bin/${arch}-alpine-linux-musl-"
 
-  apk add php84 php84-dev curl git autoconf bison re2c pkgconf zlib-dev zstd-static zstd-dev openssl-libs-static openssl-dev zlib-static zlib-dev gnu-libiconv-dev clang-dev llvm-dev
+  apk add php85 php85-dev curl git autoconf bison re2c pkgconf zlib-dev zstd-static zstd-dev openssl-libs-static openssl-dev zlib-static zlib-dev gnu-libiconv-dev clang-dev llvm-dev
 
-  # Create symlinks for php84 to be accessible as php
-  ln -sf /usr/bin/php84 /usr/bin/php
-  ln -sf /usr/bin/php-config84 /usr/bin/php-config
-  ln -sf /usr/bin/phpize84 /usr/bin/phpize
+  # Create symlinks for php85 to be accessible as php
+  ln -sf /usr/bin/php85 /usr/bin/php
+  ln -sf /usr/bin/php-config85 /usr/bin/php-config
+  ln -sf /usr/bin/phpize85 /usr/bin/phpize
 
   install_curl
 
@@ -94,7 +94,7 @@ fix_static_linking
 make LDFLAGS=$MAKE_LDFLAGS -j8
 make install-cli
 
-# Remove php84 that was used for building before installing php
-apk del php84 php84-dev
+# Remove php85 that was used for building before installing php
+apk del php85 php85-dev
 rm -f /usr/bin/php /usr/bin/php-config /usr/bin/phpize
 
