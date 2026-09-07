@@ -11,6 +11,9 @@ set -e
 
 install_deps() {
   brew tap shivammathur/php
+  # GitHub macOS runners ship php from homebrew/core; brew refuses to
+  # install a same-named formula from another tap, so drop the core one first
+  brew uninstall --force --ignore-dependencies php || true
   brew install shivammathur/php/php bash curl autoconf automake bison re2c zstd git openssl zlib cmake libzip librdkafka libiconv llvm@17
   brew link --overwrite --force shivammathur/php/php
 
