@@ -23,7 +23,9 @@ install_libzip() {
 	test -d libzip-1.9.2 && rm -fr "$_"
 	curl -sSL https://github.com/nih-at/libzip/releases/download/v1.9.2/libzip-1.9.2.tar.gz | tar -xzf -
 	cd libzip-1.9.2 && mkdir -p build && cd build
-	cmake -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_SHARED_LIBS=OFF -DENABLE_LZMA=OFF -DENABLE_BZIP2=OFF ..
+	# libzip 1.9.2 declares cmake_minimum_required 3.0.2; Alpine 3.23's CMake 4
+	# refuses projects older than 3.5 unless this policy floor is passed
+	cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_SHARED_LIBS=OFF -DENABLE_LZMA=OFF -DENABLE_BZIP2=OFF ..
 	make -j4 && make install
 	cd ../..
 	rm -fr libzip-1.9.2
