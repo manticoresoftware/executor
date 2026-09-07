@@ -11,11 +11,11 @@ set -e
 
 install_deps() {
   brew tap shivammathur/php
-  brew install shivammathur/php/php@8.4 bash curl autoconf automake bison re2c zstd git openssl zlib cmake libzip librdkafka libiconv llvm@17
-  brew link --overwrite --force shivammathur/php/php@8.4
+  brew install shivammathur/php/php bash curl autoconf automake bison re2c zstd git openssl zlib cmake libzip librdkafka libiconv llvm@17
+  brew link --overwrite --force shivammathur/php/php
 
   # Add PHP to PATH - include both versioned path and brew bin directory
-  PHP_PREFIX="$(brew --prefix shivammathur/php/php@8.4)"
+  PHP_PREFIX="$(brew --prefix shivammathur/php/php)"
   BREW_PREFIX="$(brew --prefix)"
   export PATH="${PHP_PREFIX}/bin:${BREW_PREFIX}/bin:${PATH}"
 
