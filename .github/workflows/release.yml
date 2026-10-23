@@ -931,7 +931,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Update deps
-        uses: manticoresoftware/manticoresearch/actions/update-deps@master
+        uses: manticoresoftware/manticoresearch/actions/update-deps@main
         with:
           name: executor
           version: "${{ needs.pack.outputs.version_full }}"
