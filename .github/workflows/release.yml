@@ -57,7 +57,16 @@ jobs:
           debug: true
       - name: Check if we should continue packing
         id: check-should-continue
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          # A previous run may have already published this version.
+          if [[ "${{ steps.semver-tagger.outputs.target }}" == "release" ]] &&
+             gh release view "${{ steps.semver-tagger.outputs.version }}" >/dev/null 2>&1; then
+            echo "Skipping packing because GitHub Release ${{ steps.semver-tagger.outputs.version }} already exists"
+            echo "should_continue=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           # Continue if version was updated, if we have the "pack" label on PR, or if target is "release"
           if [[ "${{ steps.semver-tagger.outputs.version_updated }}" == "true" ]]; then
             echo "Continuing because version was updated"
