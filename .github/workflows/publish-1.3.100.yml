@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   publish:
-    if: github.event.head_commit.message == 'ci: publish verified Executor 1.3.100 RPM'
+    if: "github.event.head_commit.message == 'ci: publish verified Executor 1.3.100 RPM'"
     runs-on: ubuntu-22.04
     steps:
       - name: Download RPM from verified tag build
