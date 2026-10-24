@@ -1,0 +1,62 @@
+name: Publish verified Executor 1.3.100 RPM
+
+on:
+  push:
+    branches:
+      - hotfix/1.3.100-publish
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    if: github.event.head_commit.message == 'ci: publish verified Executor 1.3.100 RPM'
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Download RPM from verified tag build
+        uses: actions/download-artifact@v4
+        with:
+          name: executor-rpm-el9-x86_64
+          run-id: 40112843728
+          github-token: ${{ github.token }}
+          path: dist
+
+      - name: Prepare artifact for repository publisher
+        shell: bash
+        run: |
+          set -euo pipefail
+          package=manticore-executor-1.3.100_26102416.d6dbe59f-1.el9.x86_64.rpm
+          test -f "dist/$package"
+          test "$(find dist -maxdepth 1 -name '*.rpm' | wc -l)" -eq 1
+          mkdir -p packed
+          tar -cf packed/artifact.tar -C dist "$package"
+
+      - name: Upload publisher artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: executor-1.3.100-publisher
+          path: packed/artifact.tar
+          if-no-files-found: error
+
+      - name: Publish RPM to release_candidate
+        uses: manticoresoftware/publish_to_repo@main
+        with:
+          ssh_key: ${{ secrets.REPO_SSH_KEY }}
+          distr: '9'
+          arch: x86_64
+          artifact: executor-1.3.100-publisher
+          type: rpm
+          delimiter: '_'
+          target: release
+
+      - name: Create versioned GitHub prerelease
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create v1.3.100 dist/*.rpm \
+            --title 'Manticore Executor 1.3.100' \
+            --notes 'Security maintenance: update embedded PHP from 8.4.2 to 8.4.27. AlmaLinux 9 x86_64.' \
+            --prerelease
