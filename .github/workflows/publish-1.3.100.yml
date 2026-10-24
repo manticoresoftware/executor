@@ -60,3 +60,28 @@ jobs:
             --title 'Manticore Executor 1.3.100' \
             --notes 'Security maintenance: update embedded PHP from 8.4.2 to 8.4.27. AlmaLinux 9 x86_64.' \
             --prerelease
+
+  prerelease:
+    if: "github.event.head_commit.message == 'ci: create Executor 1.3.100 prerelease'"
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Download RPM from verified tag build
+        uses: actions/download-artifact@v4
+        with:
+          name: executor-rpm-el9-x86_64
+          run-id: 40112843728
+          github-token: ${{ github.token }}
+          path: dist
+
+      - name: Verify and publish GitHub prerelease
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: manticoresoftware/executor
+        run: |
+          set -euo pipefail
+          test -f dist/manticore-executor-1.3.100_26102416.d6dbe59f-1.el9.x86_64.rpm
+          gh release create v1.3.100 dist/*.rpm \
+            --title 'Manticore Executor 1.3.100' \
+            --notes 'Security maintenance: update embedded PHP from 8.4.2 to 8.4.27. AlmaLinux 9 x86_64.' \
+            --prerelease
