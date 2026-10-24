@@ -1,0 +1,40 @@
+name: Restore Executor 1.4.6 dev test archive
+
+# One-time recovery of the test archive from the already published dev build.
+# Remove this workflow after the asset has been restored.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type restore-executor-1.4.6-dev-archive'
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  restore:
+    if: ${{ inputs.confirm == 'restore-executor-1.4.6-dev-archive' }}
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Download archive from successful dev build
+        uses: actions/download-artifact@v7
+        with:
+          repository: manticoresoftware/executor
+          run-id: 39895724555
+          github-token: ${{ github.token }}
+          name: artifact-dev-ubuntu-22.04-amd64
+          path: .
+
+      - name: Upload missing dev archive to existing 1.4.6 release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar -xf artifact.tar
+          archive='manticore-executor-1.4.6+26102310-445049b4-dev-linux-amd64-dev.tar.gz'
+          test -s "$archive"
+          gh release upload 1.4.6 "$archive" --repo "$GITHUB_REPOSITORY"
