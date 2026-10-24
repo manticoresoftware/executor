@@ -1,0 +1,216 @@
+name: Republish Executor 1.4.6 to dev
+
+# One-time promotion of the exact packages from the successful release build.
+# Remove this workflow after successful publication.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type publish-executor-1.4.6-to-dev to authorize publication"
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: republish-executor-1.4.6-to-dev
+  cancel-in-progress: false
+
+jobs:
+  republish:
+    if: ${{ inputs.confirm == 'publish-executor-1.4.6-to-dev' }}
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        include:
+          - artifact: artifact-deb-amd64
+            type: deb
+            arch: amd64
+            delimiter: "-"
+            distro: buster
+          - artifact: artifact-deb-arm64
+            type: deb
+            arch: arm64
+            delimiter: "-"
+            distro: buster
+          - artifact: artifact-deb-amd64
+            type: deb
+            arch: amd64
+            delimiter: "-"
+            distro: bionic
+          - artifact: artifact-deb-arm64
+            type: deb
+            arch: arm64
+            delimiter: "-"
+            distro: bionic
+          - artifact: artifact-deb-amd64
+            type: deb
+            arch: amd64
+            delimiter: "-"
+            distro: focal
+          - artifact: artifact-deb-arm64
+            type: deb
+            arch: arm64
+            delimiter: "-"
+            distro: focal
+          - artifact: artifact-deb-amd64
+            type: deb
+            arch: amd64
+            delimiter: "-"
+            distro: jammy
+          - artifact: artifact-deb-arm64
+            type: deb
+            arch: arm64
+            delimiter: "-"
+            distro: jammy
+          - artifact: artifact-deb-amd64
+            type: deb
+            arch: amd64
+            delimiter: "-"
+            distro: bullseye
+          - artifact: artifact-deb-arm64
+            type: deb
+            arch: arm64
+            delimiter: "-"
+            distro: bullseye
+          - artifact: artifact-deb-amd64
+            type: deb
+            arch: amd64
+            delimiter: "-"
+            distro: bookworm
+          - artifact: artifact-deb-arm64
+            type: deb
+            arch: arm64
+            delimiter: "-"
+            distro: bookworm
+          - artifact: artifact-rpm-el8-amd64
+            type: rpm
+            arch: x86_64
+            delimiter: "_"
+            distro: 8
+          - artifact: artifact-rpm-el8-aarch64
+            type: rpm
+            arch: aarch
+            delimiter: "_"
+            distro: 8
+          - artifact: artifact-rpm-el9-amd64
+            type: rpm
+            arch: x86_64
+            delimiter: "_"
+            distro: 9
+          - artifact: artifact-rpm-el9-aarch64
+            type: rpm
+            arch: aarch
+            delimiter: "_"
+            distro: 9
+          - artifact: artifact-rpm-el10-amd64
+            type: rpm
+            arch: x86_64
+            delimiter: "_"
+            distro: 10
+          - artifact: artifact-rpm-el10-aarch64
+            type: rpm
+            arch: aarch
+            delimiter: "_"
+            distro: 10
+          - artifact: artifact-macos-15-intel-x86_64
+            type: arc
+            arch: x86_64
+            delimiter: "-"
+            distro: ""
+          - artifact: artifact-macos-15-arm64
+            type: arc
+            arch: aarch
+            delimiter: "-"
+            distro: ""
+          # manticore-extra meta package now
+          - artifact: artifact-extra-deb
+            type: deb
+            arch: all
+            delimiter: "-"
+            distro: buster
+          - artifact: artifact-extra-deb
+            type: deb
+            arch: all
+            delimiter: "-"
+            distro: bionic
+          - artifact: artifact-extra-deb
+            type: deb
+            arch: all
+            delimiter: "-"
+            distro: focal
+          - artifact: artifact-extra-deb
+            type: deb
+            arch: all
+            delimiter: "-"
+            distro: jammy
+          - artifact: artifact-extra-deb
+            type: deb
+            arch: all
+            delimiter: "-"
+            distro: bullseye
+          - artifact: artifact-extra-deb
+            type: deb
+            arch: all
+            delimiter: "-"
+            distro: bookworm
+          - artifact: artifact-extra-rpm-el8
+            type: rpm
+            arch: noarch
+            delimiter: "_"
+            distro: 8
+          - artifact: artifact-extra-rpm-el9
+            type: rpm
+            arch: noarch
+            delimiter: "_"
+            distro: 9
+          - artifact: artifact-extra-rpm-el10
+            type: rpm
+            arch: noarch
+            delimiter: "_"
+            distro: 10
+    steps:
+      - name: Download packages from the original release run
+        uses: actions/download-artifact@v7
+        with:
+          repository: manticoresoftware/executor
+          run-id: 39921768774
+          github-token: ${{ github.token }}
+          name: ${{ matrix.artifact }}
+          path: build
+
+      - name: Unpack and verify build identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar -xf build/artifact.tar -C build
+          find build -type f | sort
+          if ! find build -type f -name '*a57785f2*' | grep -q .; then
+            echo "Expected Executor 1.4.6 build a57785f2 was not found"
+            exit 1
+          fi
+
+      # Same publisher script and arguments as publish_to_repo/action.yml,
+      # except TARGET=dev. The existing composite action only downloads
+      # artifacts from the current run, so it cannot directly use run 39921768774.
+      - name: Publish verified release artifact to dev
+        shell: bash
+        env:
+          REMOTE_SERVER: root@repo.manticoresearch.com
+          SSH_KEY: ${{ secrets.REPO_SSH_KEY }}
+          SSH_KEY_LOCATION: /tmp/repo.key
+          TYPE: ${{ matrix.type }}
+          DELIMITER: ${{ matrix.delimiter }}
+          DISTR: ${{ matrix.distro }}
+          TARGET: dev
+          DRY_RUN: "false"
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          curl -fsSL https://raw.githubusercontent.com/manticoresoftware/publish_to_repo/main/run_via_ssh -o publish.sh
+          bash publish.sh
