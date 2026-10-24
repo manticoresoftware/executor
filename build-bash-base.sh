@@ -32,15 +32,15 @@ if [[ -z "$SKIP_SYSTEM_DEPS"  || "$SKIP_SYSTEM_DEPS" == 0 ]]; then
 fi
 
 
-curl -sSL "https://www.php.net/distributions/php-${PHP_VERSION}.tar.gz" | tar -xzf -
+curl -fsSL --retry 3 "https://github.com/php/php-src/archive/refs/tags/php-${PHP_VERSION}.tar.gz" | tar -xzf -
 test -d build && rm -fr "$_"
-mv "php-$PHP_VERSION" build && cd "$_"
+mv "php-src-php-$PHP_VERSION" build && cd "$_"
 
 # Build extra extensions
 cd ext
 
 #  zstd
-git clone --recursive --depth=1 https://github.com/manticoresoftware/php-ext-zstd.git
+git clone --recursive https://github.com/manticoresoftware/php-ext-zstd.git
 mv php-ext-zstd zstd
 cd zstd && git checkout "$ZSTD_REV"
 # cd zstd && make && cd ..

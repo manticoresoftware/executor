@@ -1,877 +1,119 @@
-name: release
+name: Executor 1.3.100 maintenance
 
 on:
   push:
+    branches:
+      - hotfix/1.3.100
     tags:
-      - 'v*.*.*'
+      - v1.3.100
 
-env:
-  APP_NAME: 'manticore-executor'
-  DOCKER_TAG: 'manticoresearch/manticore-executor'
-  PHP_VERSION: '8.3.15'
-  MAINTAINER: 'Manticore'
-  DESC: 'Custom built PHP executor for Manticore.'
-  EXTRA_NAME: 'manticore-extra'
-  EXTRA_DESC: 'Manticore extra package that includes executor and columnar lib'
-  COLUMNAR_NAME: 'manticore-columnar-lib'
-  COLUMNAR_VERSION: '2.3.1'
-  GALERA_NAME: 'manticore-galera'
-  GALERA_VERSION: '3.37'
-  LOAD_NAME: 'manticore-load'
-  LOAD_VERSION: '1.0.1'
-  DOCKER_CLI_EXPERIMENTAL: enabled
+permissions:
+  contents: read
 
 jobs:
-  vars:
-    runs-on: ubuntu-22.04
-    outputs:
-      app_version: ${{ steps.vars.outputs.app_version }}
-      app_date: ${{ steps.vars.outputs.app_date }}
-      app_commit: ${{ steps.vars.outputs.app_commit }}
-      rpm_suffix: ${{ steps.vars.outputs.rpm_suffix }}
-      deb_suffix: ${{ steps.vars.outputs.deb_suffix }}
-
-    steps:
-      - uses: actions/checkout@v3
-      - id: vars
-        run: |
-          date=$( date +%y%m%d%H )
-          commit=${GITHUB_SHA:0:7}
-
-          echo "app_version=$(echo ${{ github.ref_name }} | cut -dv -f2)" >> $GITHUB_OUTPUT
-          echo "app_date=$date" >> $GITHUB_OUTPUT
-          echo "app_commit=$commit" >> $GITHUB_OUTPUT
-          echo "rpm_suffix=_${date}.$commit" >> $GITHUB_OUTPUT
-          echo "deb_suffix=-${date}-$commit" >> $GITHUB_OUTPUT
-
-  build-artifact:
-    name: ${{ matrix.name }}
-    runs-on: ${{ matrix.os }}
-    needs:
-      - vars
-    strategy:
-      matrix:
-        include:
-          - name: AMD64 with buildx for Linux
-            os: ubuntu-22.04
-            arch: amd64
-            use_buildx: true
-            run: ""
-          - name: ARM64 with buildx for Linux
-            os: ubuntu-22.04
-            arch: arm64
-            use_buildx: true
-            run: ""
-          - name: AMD64 native on OSX
-            os: macos-13
-            arch: x86_64
-            use_buildx: false
-            run: ./build-osx
-          - name: ARM64 native on OSX
-            os: macos-14
-            arch: arm64
-            use_buildx: false
-            run: ./build-osx
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Set up QEMU
-        if: ${{ matrix.use_buildx == true }}
-        uses: docker/setup-qemu-action@v2
-      - name: Set up Docker Buildx
-        if: ${{ matrix.use_buildx == true }}
-        uses: docker/setup-buildx-action@v3
-      - name: Build docker image
-        if: ${{ matrix.use_buildx == true }}
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          platforms: linux/${{ matrix.arch }}
-          load: true
-          push: false
-          tags: ${{ env.DOCKER_TAG }}:${{ needs.vars.outputs.app_version }}
-          build-args: BUILD_DEV=0
-      - name: Create artifact
-        run: |
-          [ -n "${{ matrix.run }}" ] && ${{ matrix.run }} ${{ env.PHP_VERSION }} || true
-          APP_ARCH=${{ matrix.arch }} \
-            APP_VERSION=${{ needs.vars.outputs.app_version }} \
-            APP_NAME=${{ env.APP_NAME }} \
-            APP_DATE=${{ needs.vars.outputs.app_date }} \
-            RUNNER_OS="${{ runner.os }}" \
-            DOCKER_IMAGE=${{ env.DOCKER_TAG }}:${{ needs.vars.outputs.app_version }} \
-            ./collect-assets
-        shell: bash
-      - uses: manticoresoftware/upload_artifact_with_retries@main
-        with:
-          name: artifact-${{ matrix.os }}-${{ matrix.arch }}
-          path: ./*${{ matrix.arch }}.tar.gz
-
-  build-artifact-dev:
-    runs-on: ubuntu-22.04
-    needs:
-      - vars
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - id: vars
-        run: |
-          echo "app_version=$(echo ${{ github.ref_name }} | cut -dv -f2)" >> $GITHUB_OUTPUT
-      - name: Build manticore-executor-dev
-        run: ./build-linux ${{ env.PHP_VERSION }} 0 1
-        shell: bash
-      - name: Create artifact
-        run: |
-          APP_ARCH=amd64 \
-            APP_VERSION=${{ needs.vars.outputs.app_version }} \
-            APP_NAME=${{ env.APP_NAME }} \
-            APP_DATE=${{ needs.vars.outputs.app_date }} \
-            RUNNER_OS="${{ runner.os }}" \
-            ASSET_SUFFIX=-dev \
-            ./collect-assets
-        shell: bash
-      - uses: manticoresoftware/upload_artifact_with_retries@main
-        with:
-          name: artifact-dev-ubuntu-22.04-amd64
-          path: ./*.tar.gz
-
-  build-linux-packages:
-    needs:
-      - vars
-      - build-artifact
+  rpm-el9-x86_64:
+    name: Build and verify RPM on AlmaLinux 9
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
-      - name: Download artifact
-        uses: manticoresoftware/download_artifact_with_retries@main
-        with:
-          name: artifact-ubuntu-22.04-amd64
-          path: .
-      - name: Prepare packages structure
+      - uses: actions/checkout@v4
+
+      - name: Compile the original Executor with PHP 8.4.27
+        shell: bash
         run: |
-          # name is like assets manticore-executor_v0.5.1-221214-e089052_linux_amd64:
-          tar -xzf *.tar.gz
+          set -euo pipefail
+          docker build --progress=plain -t executor-maintenance:1.3.100 .
+          cid=$(docker create executor-maintenance:1.3.100)
+          trap 'docker rm -f "$cid" >/dev/null 2>&1 || true' EXIT
+          docker cp "$cid:/usr/bin/manticore-executor" ./manticore-executor
+          chmod +x ./manticore-executor
 
-          # Setup openssl workaround
-          mkdir -p .debpkg/DEBIAN
-          cp -p packages/postrun .debpkg/DEBIAN/postinst
-
-          mkdir -p .debpkg/usr/bin
-          mkdir -p .rpmpkg/usr/bin
-          mkdir -p .rpmpkg/usr/share/
-          cp -p *_linux_amd64/${{ env.APP_NAME }} .debpkg/usr/bin/${{ env.APP_NAME }}
-          chmod +x .debpkg/usr/bin/${{ env.APP_NAME }}
-          # cp -p README.md .debpkg/README.md
-          # cp -p LICENSE .debpkg/LICENSE
-          cp -p *_linux_amd64/${{ env.APP_NAME }} .rpmpkg/usr/bin/${{ env.APP_NAME }}
-          cp -p LICENSE .rpmpkg/usr/share/${{ env.APP_NAME }}-LICENSE
-          cp -p README.md .rpmpkg/usr/share/${{ env.APP_NAME }}-README.md
-      - uses: manticoresoftware/actions-build-deb-action@master
-        with:
-          package: ${{ env.APP_NAME }}
-          package_root: .debpkg
-          maintainer: ${{ env.MAINTAINER }}
-          version: ${{ needs.vars.outputs.app_version }}${{ needs.vars.outputs.deb_suffix }}
-          arch: 'amd64'
-          desc: '${{ env.DESC }}'
-          license: 'PHP-3.01'
-
-      - name: Build RPM packages
+      - name: Check version and existing PHP extensions
+        shell: bash
         run: |
-          sudo apt-get update -y -q
+          set -euo pipefail
+          ./manticore-executor --version | tee executor-version.txt
+          grep -q '^PHP 8.4.27 ' executor-version.txt
+          ./manticore-executor -m | tee executor-modules.txt
+          for extension in swoole ds rdkafka simdjson jchash zstd; do
+            if ! grep -iq "^$extension$" executor-modules.txt; then
+              echo "Required extension missing: $extension"
+              exit 1
+            fi
+          done
+          ./manticore-executor -r 'echo "PHP CLI smoke test passed\n";'
+
+      - name: Package EL9 x86_64 RPM
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
           sudo apt-get install -y rpm
+          version="1.3.100_$(date -u +%y%m%d%H).$(git rev-parse --short=8 HEAD)"
+          top="$RUNNER_TEMP/rpmbuild"
+          source_root="$RUNNER_TEMP/rpm-source"
+          mkdir -p "$top/SOURCES" "$top/SPECS" "$source_root/manticore-executor/usr/bin" "$source_root/manticore-executor/usr/share" dist
+          cp -p manticore-executor "$source_root/manticore-executor/usr/bin/"
+          cp -p README.md "$source_root/manticore-executor/usr/share/manticore-executor-README.md"
+          cp -p LICENSE "$source_root/manticore-executor/usr/share/manticore-executor-LICENSE"
+          tar -czf "$top/SOURCES/tmp.tar.gz" -C "$source_root" manticore-executor
+          sed -e 's/{{ NAME }}/manticore-executor/g' -e "s/{{ VERSION }}/$version/g" \
+              -e 's/{{ MAINTAINER }}/Manticore/g' \
+              -e 's/{{ DESC }}/Custom built PHP executor for Manticore./g' \
+              -e 's/{{ ARCH }}/x86_64/g' packages/main.spec > "$top/SPECS/main.spec"
+          rpmbuild -bb --define "_topdir $top" --define 'dist .el9' "$top/SPECS/main.spec"
+          cp "$top/RPMS/x86_64/manticore-executor-$version-1.el9.x86_64.rpm" dist/
+          rpm -qp --queryformat '%{NAME} %{VERSION}-%{RELEASE} %{ARCH}\n' dist/*.rpm
 
-          RPMBUILD_DIR="$HOME/rpmbuild"
-          RPMBUILD_SOURCE_DIR="$RPMBUILD_DIR/SOURCES"
-          RPMBUILD_SPEC_DIR="$RPMBUILD_DIR/SPECS"
-
-          WORKDIR="/tmp/work"
-          mkdir "$WORKDIR"
-          spec_file=main.spec
-          cp "packages/$spec_file" "$WORKDIR"
-          cp -rp ".rpmpkg" "$WORKDIR/${{ env.APP_NAME }}"
-          cd "$WORKDIR"
-
-          # Prepare spec file for RPM
-          sed -i 's/{{ NAME }}/${{ env.APP_NAME }}/g' $spec_file
-          sed -i 's/{{ VERSION }}/${{ needs.vars.outputs.app_version }}${{ needs.vars.outputs.rpm_suffix }}/g' $spec_file
-          sed -i 's/{{ MAINTAINER }}/${{ env.MAINTAINER }}/g' $spec_file
-          sed -i 's/{{ DESC }}/${{ env.DESC }}/g' $spec_file
-          sed -i 's/{{ ARCH }}/x86_64/g' $spec_file
-          # sed -i "s@{{ POSTRUN }}@$(<packages/postrun)@g" $spec_file
-
-          tar czf tmp.tar.gz "${{ env.APP_NAME }}/"
-          mkdir -p "$RPMBUILD_SOURCE_DIR"
-          mkdir -p "$RPMBUILD_SPEC_DIR"
-          mv tmp.tar.gz "$RPMBUILD_SOURCE_DIR"
-          cp -p $spec_file "$RPMBUILD_SPEC_DIR"
-          rpmbuild -bb "$RPMBUILD_SPEC_DIR/$spec_file"
-          ls -lah "$RPMBUILD_DIR/RPMS/x86_64"/*.rpm
-          cp -p "$RPMBUILD_DIR/RPMS/x86_64"/*.rpm $GITHUB_WORKSPACE
-      - name: Rename packages to proper name
+      - name: Validate RPM installation in AlmaLinux 9
+        shell: bash
         run: |
-          version=${{ needs.vars.outputs.app_version }}${{ needs.vars.outputs.rpm_suffix }}
-          rpm_path="./${{ env.APP_NAME }}-${version}-1.x86_64.rpm"
-          cp $rpm_path "./${{ env.APP_NAME }}-${version}-1.el7.x86_64.rpm"
-          cp $rpm_path "./${{ env.APP_NAME }}-${version}-1.el8.x86_64.rpm"
-          mv $rpm_path "./${{ env.APP_NAME }}-${version}-1.el9.x86_64.rpm"
-          mkdir -p ./artifacts
-          mv *.deb ./artifacts/
-          mv *.rpm ./artifacts/
-          ls -lah ./artifacts/*.deb
-          ls -lah ./artifacts/*.rpm
+          set -euo pipefail
+          docker run --rm -v "$PWD/dist:/packages:ro" almalinux:9 bash -ec '
+            dnf -y install /packages/*.rpm
+            manticore-executor --version
+            manticore-executor --version | head -n 1 | grep -q "PHP 8.4.27"
+            rpm -q manticore-executor
+          '
 
-      - uses: manticoresoftware/upload_artifact_with_retries@main
+      - name: Upload verified RPM
+        uses: actions/upload-artifact@v4
         with:
-          name: artifact-deb-amd64
-          path: ./artifacts/*.deb
+          name: executor-rpm-el9-x86_64
+          path: dist/*.rpm
+          if-no-files-found: error
 
-      - uses: manticoresoftware/upload_artifact_with_retries@main
-        with:
-          name: artifact-rpm-el7-amd64
-          path: ./artifacts/*.el7.*.rpm
-
-      - uses: manticoresoftware/upload_artifact_with_retries@main
-        with:
-          name: artifact-rpm-el8-amd64
-          path: ./artifacts/*.el8.*.rpm
-
-      - uses: manticoresoftware/upload_artifact_with_retries@main
-        with:
-          name: artifact-rpm-el9-amd64
-          path: ./artifacts/*.el9.*.rpm
-  build-linux-packages-arm64:
-    needs:
-      - vars
-      - build-artifact
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
-      - name: Download artifact
-        uses: manticoresoftware/download_artifact_with_retries@main
-        with:
-          name: artifact-ubuntu-22.04-arm64
-          path: .
-      - name: Prepare package
-        run: |
-          # name is like assets manticore-executor_v0.5.1-221214-e089052_linux_arm64:
-          tar -xzf *.tar.gz
-
-          # Setup openssl workaround
-          mkdir -p .debpkg/DEBIAN
-          cp -p packages/postrun .debpkg/DEBIAN/postinst
-
-          mkdir -p .debpkg/usr/bin
-          mkdir -p .rpmpkg/usr/bin
-          mkdir -p .rpmpkg/usr/share
-
-          cp -p *_linux_arm64/${{ env.APP_NAME }} .debpkg/usr/bin/${{ env.APP_NAME }}
-          cp -p *_linux_arm64/${{ env.APP_NAME }} .rpmpkg/usr/bin/${{ env.APP_NAME }}
-          cp -p LICENSE .rpmpkg/usr/share/${{ env.APP_NAME }}-LICENSE
-          cp -p README.md .rpmpkg/usr/share/${{ env.APP_NAME }}-README.md
-      - uses: manticoresoftware/actions-build-deb-action@master
-        with:
-          package: ${{ env.APP_NAME }}
-          package_root: .debpkg
-          maintainer: ${{ env.MAINTAINER }}
-          version: ${{ needs.vars.outputs.app_version }}${{ needs.vars.outputs.deb_suffix }}
-
-          arch: 'arm64'
-          desc: '${{ env.DESC }}'
-          license: 'PHP-3.01'
-
-      - name: Rename package to proper name
-        run: |
-          mkdir -p ./artifacts
-          mv *.deb ./artifacts
-          ls -lah ./artifacts/*.deb
-
-      - uses: manticoresoftware/upload_artifact_with_retries@main
-        with:
-          name: artifact-deb-arm64
-          path: ./artifacts/*.deb
-      - uses: manticoresoftware/actions-run-on-arch-action@master
-        name: Preparing EL7 RPM package
-        with:
-          arch: aarch64
-          distro: centos7
-          githubToken: ${{ github.token }}
-          setup: |
-            mkdir -p "${PWD}/artifacts/packages"
-            cp -rp .rpmpkg "${PWD}/artifacts/.rpmpkg"
-          dockerRunArgs: |
-            --volume "${PWD}/artifacts:/artifacts"
-          install: |
-            yum install -y sudo git kernel-devel kernel-headers
-            yum groupinstall -y "Development Tools"
-          run: |
-            RPMBUILD_DIR="$HOME/rpmbuild"
-            RPMBUILD_SOURCE_DIR="$RPMBUILD_DIR/SOURCES"
-            RPMBUILD_SPEC_DIR="$RPMBUILD_DIR/SPECS"
-            WORKDIR="/tmp/work"
-            mkdir "$WORKDIR"
-            spec_file=main.spec
-            cp "packages/$spec_file" "$WORKDIR"
-            cp -rp "/artifacts/.rpmpkg" "$WORKDIR/${{ env.APP_NAME }}"
-            cd "$WORKDIR"
-
-            # Prepare spec file for RPM
-            sed -i 's/{{ NAME }}/${{ env.APP_NAME }}/g' $spec_file
-            sed -i 's/{{ VERSION }}/${{ needs.vars.outputs.app_version }}${{ needs.vars.outputs.rpm_suffix }}/g' $spec_file
-            sed -i 's/{{ MAINTAINER }}/${{ env.MAINTAINER }}/g' $spec_file
-            sed -i 's/{{ DESC }}/${{ env.DESC }}/g' $spec_file
-            sed -i 's/{{ ARCH }}/aarch64/g' $spec_file
-            # sed -i "s@{{ POSTRUN }}@$(<packages/postrun)@g" $spec_file
-
-
-            tar czf tmp.tar.gz "${{ env.APP_NAME }}/"
-            mkdir -p "$RPMBUILD_SOURCE_DIR"
-            mkdir -p "$RPMBUILD_SPEC_DIR"
-            mv tmp.tar.gz "$RPMBUILD_SOURCE_DIR"
-            cp -p $spec_file "$RPMBUILD_SPEC_DIR"
-            rpmbuild -bb "$RPMBUILD_SPEC_DIR/$spec_file"
-            cp -p "$RPMBUILD_DIR/RPMS/$(uname -m)"/*.rpm /artifacts/
-
-      - name: Rename package to proper name
-        run: |
-          ls -lah ./artifacts/*.rpm
-          version=${{ needs.vars.outputs.app_version }}${{ needs.vars.outputs.rpm_suffix }}
-          rpm_path="./artifacts/${{ env.APP_NAME }}-${version}-1.el7.aarch64.rpm"
-          cp $rpm_path "./artifacts/${{ env.APP_NAME }}-${version}-1.el8.aarch64.rpm"
-          cp $rpm_path "./artifacts/${{ env.APP_NAME }}-${version}-1.el9.aarch64.rpm"
-
-      - uses: manticoresoftware/upload_artifact_with_retries@main
-        with:
-          name: artifact-rpm-el7-aarch64
-          path: ./artifacts/*.el7.*.rpm
-
-      - uses: manticoresoftware/upload_artifact_with_retries@main
-        with:
-          name: artifact-rpm-el8-aarch64
-          path: ./artifacts/*.el8.*.rpm
-
-      - uses: manticoresoftware/upload_artifact_with_retries@main
-        with:
-          name: artifact-rpm-el9-aarch64
-          path: ./artifacts/*.el9.*.rpm
-
-  build-extra-packages:
-    runs-on: ubuntu-22.04
-    needs:
-      - vars
-    steps:
-      - uses: actions/checkout@v3
-      - name: Prepare packages structure
-        run: |
-          mkdir -p .debpkg/usr/bin
-          mkdir -p .debpkg/usr/share/manticore
-          mkdir -p .rpmpkg/usr/bin
-          mkdir -p .rpmpkg/usr/share/manticore
-          cp -p extra.notice .debpkg/usr/share/manticore/${{ env.EXTRA_NAME }}.notice
-          cp -p extra.notice .rpmpkg/usr/share/manticore/${{ env.EXTRA_NAME }}.notice
-          echo "" > .rpmpkg/usr/share/${{ env.EXTRA_NAME }}-LICENSE
-      - uses: manticoresoftware/actions-build-deb-action@master
-        name: Build DEB packages
-        with:
-          package: ${{ env.EXTRA_NAME }}
-          package_root: .debpkg
-          maintainer: ${{ env.MAINTAINER }}
-          version: ${{ needs.vars.outputs.app_version }}${{ needs.vars.outputs.deb_suffix }}
-          arch: 'all'
-          desc: '${{ env.EXTRA_DESC }}'
-          license: 'Apache-2.0'
-          depends: '${{ env.APP_NAME }} (>= ${{ needs.vars.outputs.app_version }}), ${{ env.COLUMNAR_NAME }} (>= ${{ env.COLUMNAR_VERSION }}), ${{ env.GALERA_NAME }} (>= ${{ env.GALERA_VERSION }}), ${{ env.LOAD_NAME }} (>= ${{ env.LOAD_VERSION }}), ca-certificates'
-      - name: Build RPM packages
-        run: |
-          sudo apt-get update -y -q
-          sudo apt-get install -y rpm
-
-          RPMBUILD_DIR="$HOME/rpmbuild"
-          RPMBUILD_SOURCE_DIR="$RPMBUILD_DIR/SOURCES"
-          RPMBUILD_SPEC_DIR="$RPMBUILD_DIR/SPECS"
-
-          WORKDIR="/tmp/work"
-          mkdir "$WORKDIR"
-          spec_file=extra.spec
-          cp "packages/$spec_file" "$WORKDIR"
-          cp -rp ".rpmpkg" "$WORKDIR/${{ env.EXTRA_NAME }}"
-          cd "$WORKDIR"
-
-          # Prepare spec file for RPM
-          sed -i 's/{{ NAME }}/${{ env.EXTRA_NAME }}/g' $spec_file
-          sed -i 's/{{ VERSION }}/${{ needs.vars.outputs.app_version }}${{ needs.vars.outputs.rpm_suffix }}/g' $spec_file
-          sed -i 's/{{ MAINTAINER }}/${{ env.MAINTAINER }}/g' $spec_file
-          sed -i 's/{{ DESC }}/${{ env.EXTRA_DESC }}/g' $spec_file
-          sed -i 's/{{ EXECUTOR_NAME }}/${{ env.APP_NAME }}/g' $spec_file
-          sed -i 's/{{ EXECUTOR_VERSION }}/${{ needs.vars.outputs.app_version }}${{ needs.vars.outputs.rpm_suffix }}/g' $spec_file
-          sed -i 's/{{ COLUMNAR_NAME }}/${{ env.COLUMNAR_NAME }}/g' $spec_file
-          sed -i 's/{{ COLUMNAR_VERSION }}/${{ env.COLUMNAR_VERSION }}/g' $spec_file
-          sed -i 's/{{ GALERA_NAME }}/${{ env.GALERA_NAME }}/g' $spec_file
-          sed -i 's/{{ GALERA_VERSION }}/${{ env.GALERA_VERSION }}/g' $spec_file
-          sed -i 's/{{ LOAD_NAME }}/${{ env.LOAD_NAME }}/g' $spec_file
-          sed -i 's/{{ LOAD_VERSION }}/${{ env.LOAD_VERSION }}/g' $spec_file
-
-          tar czf tmp.tar.gz "${{ env.EXTRA_NAME }}/"
-          mkdir -p "$RPMBUILD_SOURCE_DIR"
-          mkdir -p "$RPMBUILD_SPEC_DIR"
-          mv tmp.tar.gz "$RPMBUILD_SOURCE_DIR"
-          cp -p $spec_file "$RPMBUILD_SPEC_DIR"
-          rpmbuild -bb "$RPMBUILD_SPEC_DIR/$spec_file"
-          ls -lah "$RPMBUILD_DIR/RPMS/noarch"/*.rpm
-          cp -p "$RPMBUILD_DIR/RPMS/noarch"/*.rpm $GITHUB_WORKSPACE
-
-      - name: Rename packages to proper name
-        run: |
-          version=${{ needs.vars.outputs.app_version }}${{ needs.vars.outputs.rpm_suffix }}
-          rpm_path="./${{ env.EXTRA_NAME }}-${version}-1.noarch.rpm"
-          cp $rpm_path "./${{ env.EXTRA_NAME }}-${version}-1.el7.noarch.rpm"
-          cp $rpm_path "./${{ env.EXTRA_NAME }}-${version}-1.el8.noarch.rpm"
-          mv $rpm_path "./${{ env.EXTRA_NAME }}-${version}-1.el9.noarch.rpm"
-
-          mkdir -p ./artifacts
-          mv *.deb ./artifacts/
-          mv *.rpm ./artifacts/
-          ls -lah ./artifacts/*.deb
-          ls -lah ./artifacts/*.rpm
-
-      - uses: manticoresoftware/upload_artifact_with_retries@main
-        with:
-          name: artifact-extra-deb
-          path: ./artifacts/*.deb
-
-      - uses: manticoresoftware/upload_artifact_with_retries@main
-        with:
-          name: artifact-extra-rpm-el7
-          path: ./artifacts/*.el7.noarch.rpm
-
-      - uses: manticoresoftware/upload_artifact_with_retries@main
-        with:
-          name: artifact-extra-rpm-el8
-          path: ./artifacts/*.el8.noarch.rpm
-
-      - uses: manticoresoftware/upload_artifact_with_retries@main
-        with:
-          name: artifact-extra-rpm-el9
-          path: ./artifacts/*.el9.noarch.rpm
-
-  create-release:
+  publish-candidate:
+    name: Publish candidate and create prerelease
+    if: startsWith(github.ref, 'refs/tags/v1.3.100')
+    needs: rpm-el9-x86_64
     runs-on: ubuntu-22.04
     permissions:
       contents: write
-      pull-requests: write
-      repository-projects: write
-    needs:
-      - build-artifact
-      - build-artifact-dev
-      - build-linux-packages
-      - build-linux-packages-arm64
-      - build-extra-packages
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - name: Generate changelog
-        run: |
-          curl -sSL https://github.com/git-chglog/git-chglog/releases/download/v0.15.1/git-chglog_0.15.1_linux_amd64.tar.gz | tar -xzf -
-          chmod +x git-chglog
-          ./git-chglog --output ./CHANGELOG.md $(git describe --tags $(git rev-list --tags --max-count=1))
-
-      - name: Create Release
-        id: create-release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          body_path: ./CHANGELOG.md
-          draft: false
-          prerelease: true
-
-      - name: Write upload_url to file
-        run: echo '${{ steps.create-release.outputs.upload_url }}' > upload_url.txt
-
-      - uses: manticoresoftware/upload_artifact_with_retries@main
-        with:
-          name: create-release
-          path: upload_url.txt
-
-  upload-release:
-    runs-on: ubuntu-22.04
-    needs: create-release
-    strategy:
-      matrix:
-        include:
-          - artifact_suffix: ubuntu-22.04-amd64
-            asset_name_suffix: linux_amd64.tar.gz
-            asset_content_type: application/gzip
-          - artifact_suffix: ubuntu-22.04-arm64
-            asset_name_suffix: linux_arm64.tar.gz
-            asset_content_type: application/gzip
-          - artifact_suffix: macos-13-x86_64
-            asset_name_suffix: macos_x86_64.tar.gz
-            asset_content_type: application/gzip
-          - artifact_suffix: macos-14-arm64
-            asset_name_suffix: macos_arm64.tar.gz
-            asset_content_type: application/gzip
-          - artifact_suffix: dev-ubuntu-22.04-amd64
-            asset_name_suffix: linux_amd64-dev.tar.gz
-            asset_content_type: application/gzip
-    steps:
-      - uses: manticoresoftware/download_artifact_with_retries@main
-        with:
-          name: artifact-${{ matrix.artifact_suffix }}
-          path: .
-
-      - uses: manticoresoftware/download_artifact_with_retries@main
-        with:
-          name: create-release
-          path: .
-
-      - id: vars
-        run: |
-          echo "upload_url=$(cat upload_url.txt)" >> $GITHUB_OUTPUT
-          echo "asset_path=$(ls *${{ matrix.asset_name_suffix }} | head -n 1)" >> $GITHUB_OUTPUT
-
-      - name: Upload Release Asset
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.vars.outputs.upload_url }}
-          asset_path: ${{ steps.vars.outputs.asset_path }}
-          asset_name: ${{ steps.vars.outputs.asset_path }}
-          asset_content_type: ${{ matrix.asset_content_type }}
-
-  upload-linux-packages:
-    runs-on: ubuntu-22.04
-    needs: create-release
-    strategy:
-      matrix:
-        include:
-          - pkg: deb
-            suffix: "amd64"
-            asset_content_type: application/vnd.debian.binary-package
-          - pkg: deb
-            suffix: "arm64"
-            asset_content_type: application/vnd.debian.binary-package
-          - pkg: rpm
-            suffix: "el7-amd64"
-            asset_content_type: application/x-rpm
-          - pkg: rpm
-            suffix: "el8-amd64"
-            asset_content_type: application/x-rpm
-          - pkg: rpm
-            suffix: "el9-amd64"
-            asset_content_type: application/x-rpm
-          - pkg: rpm
-            suffix: "el7-aarch64"
-            asset_content_type: application/x-rpm
-          - pkg: rpm
-            suffix: "el8-aarch64"
-            asset_content_type: application/x-rpm
-          - pkg: rpm
-            suffix: "el9-aarch64"
-            asset_content_type: application/x-rpm
-    steps:
-      - uses: manticoresoftware/download_artifact_with_retries@main
-        with:
-          name: artifact-${{ matrix.pkg }}-${{ matrix.suffix }}
-          path: .
-
-      - uses: manticoresoftware/download_artifact_with_retries@main
-        with:
-          name: create-release
-          path: .
-
-      - id: vars
-        run: |
-          asset_path=$(ls ./artifacts/*.${{ matrix.pkg }} | head -n 1)
-          echo "upload_url=$(cat upload_url.txt)" >> $GITHUB_OUTPUT
-          echo "asset_path=$asset_path" >> $GITHUB_OUTPUT
-          echo "asset_name=$(basename $asset_path)" >> $GITHUB_OUTPUT
-
-      - name: Upload Release Asset
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.vars.outputs.upload_url }}
-          asset_path: ${{ steps.vars.outputs.asset_path }}
-          asset_name: ${{ steps.vars.outputs.asset_name }}
-          asset_content_type: ${{ matrix.asset_content_type }}
-
-  upload-extra-packages:
-    runs-on: ubuntu-22.04
-    needs: create-release
-    strategy:
-      matrix:
-        include:
-          - pkg: deb
-            suffix: ""
-            asset_content_type: application/vnd.debian.binary-package
-          - pkg: rpm
-            suffix: "-el7"
-            asset_content_type: application/x-rpm
-          - pkg: rpm
-            suffix: "-el8"
-            asset_content_type: application/x-rpm
-          - pkg: rpm
-            suffix: "-el9"
-            asset_content_type: application/x-rpm
-    steps:
-      # We download amd64 only but just because of noarch
-      - uses: manticoresoftware/download_artifact_with_retries@main
-        with:
-          name: artifact-extra-${{ matrix.pkg }}${{ matrix.suffix }}
-          path: .
-
-      - uses: manticoresoftware/download_artifact_with_retries@main
-        with:
-          name: create-release
-          path: .
-
-      - name: Prepare package names
-        run: |
-          file=$(ls ./artifacts/*.${{ matrix.pkg }} | head -n 1)
-          mv "$file" artifact
-          rm -f *.${{ matrix.pkg }}
-          file=${file/amd64/all}
-          file=${file/x86_64/noarch}
-          mv artifact "$file"
-        shell: bash
-      - id: vars
-        run: |
-          asset_path=$(ls ./artifacts/*.${{ matrix.pkg }} | head -n 1)
-          echo "upload_url=$(cat upload_url.txt)" >> $GITHUB_OUTPUT
-          echo "asset_path=$asset_path" >> $GITHUB_OUTPUT
-          echo "asset_name=$(basename $asset_path)" >> $GITHUB_OUTPUT
-
-      - name: Upload Release Asset
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.vars.outputs.upload_url }}
-          asset_path: ${{ steps.vars.outputs.asset_path }}
-          asset_name: ${{ steps.vars.outputs.asset_name }}
-          asset_content_type: ${{ matrix.asset_content_type }}
-
-  deploy:
-    needs:
-      - upload-release
-      - upload-linux-packages
-      - upload-extra-packages
-    runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        include:
-          - artifact: artifact-deb-amd64
-            type: deb
-            arch: amd64
-            delimiter: "-"
-            distro: buster
-          - artifact: artifact-deb-arm64
-            type: deb
-            arch: arm64
-            delimiter: "-"
-            distro: buster
-          - artifact: artifact-deb-amd64
-            type: deb
-            arch: amd64
-            delimiter: "-"
-            distro: bionic
-          - artifact: artifact-deb-arm64
-            type: deb
-            arch: arm64
-            delimiter: "-"
-            distro: bionic
-          - artifact: artifact-deb-amd64
-            type: deb
-            arch: amd64
-            delimiter: "-"
-            distro: focal
-          - artifact: artifact-deb-arm64
-            type: deb
-            arch: arm64
-            delimiter: "-"
-            distro: focal
-          - artifact: artifact-deb-amd64
-            type: deb
-            arch: amd64
-            delimiter: "-"
-            distro: jammy
-          - artifact: artifact-deb-arm64
-            type: deb
-            arch: arm64
-            delimiter: "-"
-            distro: jammy
-          - artifact: artifact-deb-amd64
-            type: deb
-            arch: amd64
-            delimiter: "-"
-            distro: bullseye
-          - artifact: artifact-deb-arm64
-            type: deb
-            arch: arm64
-            delimiter: "-"
-            distro: bullseye
-          - artifact: artifact-deb-amd64
-            type: deb
-            arch: amd64
-            delimiter: "-"
-            distro: bookworm
-          - artifact: artifact-deb-arm64
-            type: deb
-            arch: arm64
-            delimiter: "-"
-            distro: bookworm
-          - artifact: artifact-rpm-el7-amd64
-            type: rpm
-            arch: x86_64
-            delimiter: "_"
-            distro: 7
-          - artifact: artifact-rpm-el7-aarch64
-            type: rpm
-            arch: aarch
-            delimiter: "_"
-            distro: 7
-          - artifact: artifact-rpm-el8-amd64
-            type: rpm
-            arch: x86_64
-            delimiter: "_"
-            distro: 8
-          - artifact: artifact-rpm-el8-aarch64
-            type: rpm
-            arch: aarch
-            delimiter: "_"
-            distro: 8
-          - artifact: artifact-rpm-el9-amd64
-            type: rpm
-            arch: x86_64
-            delimiter: "_"
-            distro: 9
-          - artifact: artifact-rpm-el9-aarch64
-            type: rpm
-            arch: aarch
-            delimiter: "_"
-            distro: 9
-          - artifact: artifact-macos-13-x86_64
-            type: arc
-            arch: x86_64
-            delimiter: "-"
-            distro: ""
-          - artifact: artifact-macos-14-arm64
-            type: arc
-            arch: aarch
-            delimiter: "-"
-            distro: ""
-          # manticore-extra meta package now
-          - artifact: artifact-extra-deb
-            type: deb
-            arch: all
-            delimiter: "-"
-            distro: buster
-          - artifact: artifact-extra-deb
-            type: deb
-            arch: all
-            delimiter: "-"
-            distro: bionic
-          - artifact: artifact-extra-deb
-            type: deb
-            arch: all
-            delimiter: "-"
-            distro: focal
-          - artifact: artifact-extra-deb
-            type: deb
-            arch: all
-            delimiter: "-"
-            distro: jammy
-          - artifact: artifact-extra-deb
-            type: deb
-            arch: all
-            delimiter: "-"
-            distro: bullseye
-          - artifact: artifact-extra-deb
-            type: deb
-            arch: all
-            delimiter: "-"
-            distro: bookworm
-          - artifact: artifact-extra-rpm-el7
-            type: rpm
-            arch: noarch
-            delimiter: "_"
-            distro: 7
-          - artifact: artifact-extra-rpm-el8
-            type: rpm
-            arch: noarch
-            delimiter: "_"
-            distro: 8
-          - artifact: artifact-extra-rpm-el9
-            type: rpm
-            arch: noarch
-            delimiter: "_"
-            distro: 9
-    steps:
-      - name: Deploy package
+      - name: Publish EL9 RPM to release_candidate
         uses: manticoresoftware/publish_to_repo@main
         with:
           ssh_key: ${{ secrets.REPO_SSH_KEY }}
-          distr: ${{ matrix.distro }}
-          arch: ${{ matrix.arch }}
-          artifact: ${{ matrix.artifact }}
-          type: ${{ matrix.type }}
-          delimiter: ${{ matrix.delimiter }}
+          distr: '9'
+          arch: x86_64
+          artifact: executor-rpm-el9-x86_64
+          type: rpm
+          delimiter: '_'
+          target: release
 
-  deploy-docker:
-    name: ${{ matrix.name }}
-    runs-on: ${{ matrix.os }}
-    needs:
-      - vars
-      - deploy
-    strategy:
-      matrix:
-        include:
-          - name: Deploy docker amd64
-            arch: amd64
-            os: ubuntu-22.04
-          - name: Deploy docker arm64
-            arch: arm64
-            os: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
+      - name: Download verified RPM for GitHub prerelease
+        uses: actions/download-artifact@v4
         with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Build docker image
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          file: ./Dockerfile-dist
-          platforms: linux/amd64, linux/arm64
-          load: false
-          push: true
-          tags: ${{ env.DOCKER_TAG }}:${{ needs.vars.outputs.app_version }}
+          name: executor-rpm-el9-x86_64
+          path: dist
 
-  update-manticoresearch-deps:
-    needs:
-      - vars
-      - deploy
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Update deps
-        uses: manticoresoftware/manticoresearch/actions/update-deps@master
-        with:
-          name: executor
-          version: "${{ needs.vars.outputs.app_version }} ${{ needs.vars.outputs.app_date }} ${{ needs.vars.outputs.app_commit }}"
-          token: ${{ secrets.PR_TOKEN }}
+      - name: Create versioned prerelease
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create v1.3.100 dist/*.rpm \
+            --title 'Manticore Executor 1.3.100' \
+            --notes 'Security maintenance: update embedded PHP from 8.4.2 to 8.4.27.' \
+            --prerelease
