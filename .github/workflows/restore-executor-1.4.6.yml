@@ -1,0 +1,263 @@
+name: Restore Executor 1.4.6 candidates from verified artifacts
+
+on:
+  push:
+    branches:
+      - hotfix/1.4.6-republish
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  preflight:
+    if: "github.event.head_commit.message == 'ci: republish Executor 1.4.6 candidates'"
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Protect stable release and verify first restored package
+        shell: bash
+        run: |
+          set -euo pipefail
+          root=https://repo.manticoresearch.com/repository/manticoresearch
+          check() {
+            local url="$1" expected="$2" code
+            code=$(curl -sSL --retry 3 --retry-delay 2 --max-time 60 -o /dev/null -w '%{http_code}' "$url")
+            echo "$url -> HTTP $code (expected $expected)"
+            test "$code" = "$expected"
+          }
+          check "$root/release/centos/9/x86_64/manticore-executor-1.3.100_26102416.d6dbe59f-1.el9.x86_64.rpm" 200
+          check "$root/release_candidate/centos/9/x86_64/manticore-executor-1.4.6+26102314.a57785f2-1.el9.x86_64.rpm" 200
+          check "$root/release/centos/9/x86_64/manticore-executor-1.4.6+26102314.a57785f2-1.el9.x86_64.rpm" 404
+
+  publish:
+    needs: preflight
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        include:
+          - id: artifact-deb-amd64-buster
+            artifact: artifact-deb-amd64
+            type: deb
+            arch: amd64
+            delimiter: '-'
+            distro: 'buster'
+          - id: artifact-deb-arm64-buster
+            artifact: artifact-deb-arm64
+            type: deb
+            arch: arm64
+            delimiter: '-'
+            distro: 'buster'
+          - id: artifact-deb-amd64-bionic
+            artifact: artifact-deb-amd64
+            type: deb
+            arch: amd64
+            delimiter: '-'
+            distro: 'bionic'
+          - id: artifact-deb-arm64-bionic
+            artifact: artifact-deb-arm64
+            type: deb
+            arch: arm64
+            delimiter: '-'
+            distro: 'bionic'
+          - id: artifact-deb-amd64-focal
+            artifact: artifact-deb-amd64
+            type: deb
+            arch: amd64
+            delimiter: '-'
+            distro: 'focal'
+          - id: artifact-deb-arm64-focal
+            artifact: artifact-deb-arm64
+            type: deb
+            arch: arm64
+            delimiter: '-'
+            distro: 'focal'
+          - id: artifact-deb-amd64-jammy
+            artifact: artifact-deb-amd64
+            type: deb
+            arch: amd64
+            delimiter: '-'
+            distro: 'jammy'
+          - id: artifact-deb-arm64-jammy
+            artifact: artifact-deb-arm64
+            type: deb
+            arch: arm64
+            delimiter: '-'
+            distro: 'jammy'
+          - id: artifact-deb-amd64-bullseye
+            artifact: artifact-deb-amd64
+            type: deb
+            arch: amd64
+            delimiter: '-'
+            distro: 'bullseye'
+          - id: artifact-deb-arm64-bullseye
+            artifact: artifact-deb-arm64
+            type: deb
+            arch: arm64
+            delimiter: '-'
+            distro: 'bullseye'
+          - id: artifact-deb-amd64-bookworm
+            artifact: artifact-deb-amd64
+            type: deb
+            arch: amd64
+            delimiter: '-'
+            distro: 'bookworm'
+          - id: artifact-deb-arm64-bookworm
+            artifact: artifact-deb-arm64
+            type: deb
+            arch: arm64
+            delimiter: '-'
+            distro: 'bookworm'
+          - id: artifact-rpm-el8-amd64-8
+            artifact: artifact-rpm-el8-amd64
+            type: rpm
+            arch: x86_64
+            delimiter: '_'
+            distro: '8'
+          - id: artifact-rpm-el8-aarch64-8
+            artifact: artifact-rpm-el8-aarch64
+            type: rpm
+            arch: aarch
+            delimiter: '_'
+            distro: '8'
+          - id: artifact-rpm-el9-aarch64-9
+            artifact: artifact-rpm-el9-aarch64
+            type: rpm
+            arch: aarch
+            delimiter: '_'
+            distro: '9'
+          - id: artifact-rpm-el10-amd64-10
+            artifact: artifact-rpm-el10-amd64
+            type: rpm
+            arch: x86_64
+            delimiter: '_'
+            distro: '10'
+          - id: artifact-rpm-el10-aarch64-10
+            artifact: artifact-rpm-el10-aarch64
+            type: rpm
+            arch: aarch
+            delimiter: '_'
+            distro: '10'
+          - id: artifact-macos-15-intel-x86_64-macos
+            artifact: artifact-macos-15-intel-x86_64
+            type: arc
+            arch: x86_64
+            delimiter: '-'
+            distro: ''
+          - id: artifact-macos-15-arm64-macos
+            artifact: artifact-macos-15-arm64
+            type: arc
+            arch: aarch
+            delimiter: '-'
+            distro: ''
+          - id: artifact-extra-deb-buster
+            artifact: artifact-extra-deb
+            type: deb
+            arch: all
+            delimiter: '-'
+            distro: 'buster'
+          - id: artifact-extra-deb-bionic
+            artifact: artifact-extra-deb
+            type: deb
+            arch: all
+            delimiter: '-'
+            distro: 'bionic'
+          - id: artifact-extra-deb-focal
+            artifact: artifact-extra-deb
+            type: deb
+            arch: all
+            delimiter: '-'
+            distro: 'focal'
+          - id: artifact-extra-deb-jammy
+            artifact: artifact-extra-deb
+            type: deb
+            arch: all
+            delimiter: '-'
+            distro: 'jammy'
+          - id: artifact-extra-deb-bullseye
+            artifact: artifact-extra-deb
+            type: deb
+            arch: all
+            delimiter: '-'
+            distro: 'bullseye'
+          - id: artifact-extra-deb-bookworm
+            artifact: artifact-extra-deb
+            type: deb
+            arch: all
+            delimiter: '-'
+            distro: 'bookworm'
+          - id: artifact-extra-rpm-el8-8
+            artifact: artifact-extra-rpm-el8
+            type: rpm
+            arch: noarch
+            delimiter: '_'
+            distro: '8'
+          - id: artifact-extra-rpm-el9-9
+            artifact: artifact-extra-rpm-el9
+            type: rpm
+            arch: noarch
+            delimiter: '_'
+            distro: '9'
+          - id: artifact-extra-rpm-el10-10
+            artifact: artifact-extra-rpm-el10
+            type: rpm
+            arch: noarch
+            delimiter: '_'
+            distro: '10'
+    name: ${{ matrix.id }}
+    steps:
+      - name: Download original verified artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          repository: manticoresoftware/executor
+          run-id: 39921768774
+          github-token: ${{ github.token }}
+          path: incoming
+
+      - name: Verify original publisher artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s incoming/artifact.tar
+          tar -tf incoming/artifact.tar | grep -E '\.(rpm|deb|tar\.gz)$'
+
+      - name: Re-upload original publisher archive unchanged
+        uses: actions/upload-artifact@v4
+        with:
+          name: republish-${{ matrix.id }}
+          path: incoming/artifact.tar
+          if-no-files-found: error
+
+      - name: Restore only release_candidate packages
+        uses: manticoresoftware/publish_to_repo@main
+        with:
+          ssh_key: ${{ secrets.REPO_SSH_KEY }}
+          distr: ${{ matrix.distro }}
+          arch: ${{ matrix.arch }}
+          artifact: republish-${{ matrix.id }}
+          type: ${{ matrix.type }}
+          delimiter: ${{ matrix.delimiter }}
+          target: release
+
+  verify:
+    needs: publish
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check representative release_candidate assets and preserved stable package
+        shell: bash
+        run: |
+          set -euo pipefail
+          check() {
+            local url="$1" code
+            code=$(curl -sSL --retry 3 --retry-delay 2 --max-time 60 -o /dev/null -w '%{http_code}' "$url")
+            echo "$url -> HTTP $code"
+            test "$code" = 200
+          }
+          base=https://repo.manticoresearch.com/repository
+          check "$base/manticoresearch/release/centos/9/x86_64/manticore-executor-1.3.100_26102416.d6dbe59f-1.el9.x86_64.rpm"
+          check "$base/manticoresearch/release_candidate/centos/9/x86_64/manticore-executor-1.4.6+26102314.a57785f2-1.el9.x86_64.rpm"
+          check "$base/manticoresearch/release_candidate/centos/9/x86_64/manticore-extra-1.4.6+26102314.a57785f2-1.el9.noarch.rpm"
+          check "$base/manticoresearch/release_candidate/centos/9/aarch64/manticore-executor-1.4.6+26102314.a57785f2-1.el9.aarch64.rpm"
+
