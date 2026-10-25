@@ -1,0 +1,28 @@
+name: Verify Executor release promotion before republishing 1.4.6
+on:
+  push:
+    branches:
+      - hotfix/1.4.6-republish
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Verify the promoted 1.3.100 RPM and clean candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          root=https://repo.manticoresearch.com/repository/manticoresearch
+          stable=manticore-executor-1.3.100_26102416.d6dbe59f-1.el9.x86_64.rpm
+          newest=manticore-executor-1.4.6+26102314.a57785f2-1.el9.x86_64.rpm
+          extra=manticore-extra-1.4.6+26102314.a57785f2-1.el9.noarch.rpm
+          verify_status() {
+            local url="$1" expected="$2" status
+            status=$(curl -sSL --retry 2 --max-time 60 -o /dev/null -w '%{http_code}' "$url")
+            echo "$url -> $status (expected $expected)"
+            test "$status" = "$expected" || exit 1
+          }
+          verify_status "$root/release/centos/9/x86_64/$stable" 200
+          verify_status "$root/release_candidate/centos/9/x86_64/$newest" 404
+          verify_status "$root/release_candidate/centos/9/x86_64/$extra" 404
