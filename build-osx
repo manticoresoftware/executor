@@ -10,21 +10,29 @@ set -e
 . helper.sh
 
 install_deps() {
-  brew tap shivammathur/php
-  # GitHub macOS runners ship php from homebrew/core; brew refuses to
-  # install a same-named formula from another tap, so drop the core one first
-  brew uninstall --force --ignore-dependencies php || true
-  brew install shivammathur/php/php bash curl autoconf automake bison re2c zstd git openssl zlib cmake libzip librdkafka libiconv llvm@17
-  brew link --overwrite --force shivammathur/php/php
+  # Use Homebrew's PHP 8.5 as the build-time interpreter; the executor
+  # itself is built separately from the requested PHP source release.
+  brew update
+  brew install php bash curl autoconf automake bison re2c zstd git openssl zlib cmake libzip librdkafka llvm@17
+  # Homebrew has no bottles for macOS Intel and its libiconv source build fails.
+  # Use the system iconv library there; keep Homebrew libiconv on Apple Silicon.
+  if [[ "$(uname -m)" == "x86_64" ]]; then
+    # PHP's iconv check needs the header and library in a real prefix.
+    # On macOS, these live in the SDK rather than under /usr/include.
+    ICONV_PREFIX="$(xcrun --sdk macosx --show-sdk-path)/usr"
+  else
+    brew install libiconv
+    ICONV_PREFIX="$(brew --prefix libiconv)"
+  fi
+  brew link --overwrite --force php
 
   # Add PHP to PATH - include both versioned path and brew bin directory
-  PHP_PREFIX="$(brew --prefix shivammathur/php/php)"
+  PHP_PREFIX="$(brew --prefix php)"
   BREW_PREFIX="$(brew --prefix)"
   export PATH="${PHP_PREFIX}/bin:${BREW_PREFIX}/bin:${PATH}"
 
   OPENSSL_PREFIX="$(brew --prefix openssl)"
   LIBRDKAFKA_PREFIX="$(brew --prefix librdkafka)"
-  ICONV_PREFIX="$(brew --prefix libiconv)"
   OPENSSL_CFLAGS="-I${OPENSSL_PREFIX}/include"
   OPENSSL_LIBS="-L${OPENSSL_PREFIX}/lib -lcrypto -lssl"
   export OPENSSL_PREFIX OPENSSL_CFLAGS OPENSSL_LIBS
@@ -87,7 +95,7 @@ chmod +x configure
 	--enable-jchash \
 	--enable-simdjson \
 	--enable-llm \
-  --with-openssl --with-zlib --with-zip --with-iconv=$(brew --prefix libiconv) \
+  --with-openssl --with-zlib --with-zip --with-iconv="$ICONV_PREFIX" \
   --enable-filter \
   --with-curl \
   --enable-opcache \
